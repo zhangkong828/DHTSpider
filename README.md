@@ -1,2 +1,2 @@
 # DHTSpider
-A  Simple DHT Crawler, Written in Csharp.
+A Very Simple Spider With DHT Crawler, Written by C#.
