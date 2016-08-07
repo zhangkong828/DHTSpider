@@ -1,0 +1,39 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="Tancoder.Torrent.NewMetadataEventArgs" Collapsed="true">
+    <Position X="2" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAA=</HashCode>
+      <FileName>ISpider.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Tancoder.Torrent.Metadata" Collapsed="true">
+    <Position X="3.75" Y="0.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAgQAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Metadata.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Interface Name="Tancoder.Torrent.ISpider" Collapsed="true">
+    <Position X="3.75" Y="3" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAACAAAAAAABCAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>ISpider.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="Tancoder.Torrent.IMetaDataFilter" Collapsed="true">
+    <Position X="2" Y="3" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>IMetaDataFilter.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Delegate Name="Tancoder.Torrent.NewMetadataEvent" Collapsed="true">
+    <Position X="2" Y="5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAQAAAAAgAAAAAAAAAAAAA=</HashCode>
+      <FileName>ISpider.cs</FileName>
+    </TypeIdentifier>
+  </Delegate>
+  <Font Name="Microsoft YaHei UI" Size="9" />
+</ClassDiagram>

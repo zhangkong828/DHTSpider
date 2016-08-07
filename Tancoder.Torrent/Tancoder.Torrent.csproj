@@ -1,0 +1,124 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{B3FDEA8E-20F3-4BE3-B73A-505B45BA9501}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Tancoder.Torrent</RootNamespace>
+    <AssemblyName>Tancoder.Torrent</AssemblyName>
+    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile>
+    </TargetFrameworkProfile>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="BigInteger.cs" />
+    <Compile Include="EventArgs\NodeAddedEventArgs.cs" />
+    <Compile Include="EventArgs\NodeFoundEventArgs.cs" />
+    <Compile Include="EventArgs\StateUpdateEventArgs.cs" />
+    <Compile Include="Exceptions\ConnectionException.cs" />
+    <Compile Include="Exceptions\ListenerException.cs" />
+    <Compile Include="Exceptions\MessageException.cs" />
+    <Compile Include="Exceptions\ProtocolException.cs" />
+    <Compile Include="Exceptions\TorrentLoadException.cs" />
+    <Compile Include="FindPeersResult.cs" />
+    <Compile Include="GetPeersResult.cs" />
+    <Compile Include="IDhtEngine.cs" />
+    <Compile Include="IMetaDataFilter.cs" />
+    <Compile Include="InfoHash.cs" />
+    <Compile Include="ISpider.cs" />
+    <Compile Include="Listeners\DhtListener.cs" />
+    <Compile Include="Listeners\Listener.cs" />
+    <Compile Include="Listeners\UdpListener.cs" />
+    <Compile Include="Listeners\WireListener.cs" />
+    <Compile Include="Messages\DhtMessage.cs" />
+    <Compile Include="MessageException.cs" />
+    <Compile Include="MessageFactory.cs" />
+    <Compile Include="Messages\Errors\ErrorMessage.cs" />
+    <Compile Include="Messages\Queries\AnnouncePeer.cs" />
+    <Compile Include="Messages\Queries\FindNode.cs" />
+    <Compile Include="Messages\Queries\GetPeers.cs" />
+    <Compile Include="Messages\Queries\Ping.cs" />
+    <Compile Include="Messages\Queries\QueryMessage.cs" />
+    <Compile Include="Messages\Responses\AnnouncePeerResponse.cs" />
+    <Compile Include="Messages\Responses\FindNodeResponse.cs" />
+    <Compile Include="Messages\Responses\GetPeersResponse.cs" />
+    <Compile Include="Messages\Responses\PingResponse.cs" />
+    <Compile Include="Messages\Responses\ResponseMessage.cs" />
+    <Compile Include="Messages\WireMessage.cs" />
+    <Compile Include="Messages\Wire\ExtData.cs" />
+    <Compile Include="Messages\Wire\ExtendMessage.cs" />
+    <Compile Include="Messages\Wire\ExtHandShack.cs" />
+    <Compile Include="Messages\Wire\ExtQueryPiece.cs" />
+    <Compile Include="Messages\Wire\HandShack.cs" />
+    <Compile Include="Metadata.cs" />
+    <Compile Include="MonoTorrent.BEncoding\BEncodedDictionary.cs" />
+    <Compile Include="MonoTorrent.BEncoding\BEncodedList.cs" />
+    <Compile Include="MonoTorrent.BEncoding\BEncodedNumber.cs" />
+    <Compile Include="MonoTorrent.BEncoding\BEncodedString.cs" />
+    <Compile Include="MonoTorrent.BEncoding\BEncodingException.cs" />
+    <Compile Include="MonoTorrent.BEncoding\IBEncodedValue.cs" />
+    <Compile Include="MonoTorrent.BEncoding\RawReader.cs" />
+    <Compile Include="Nodes\ITokenManager.cs" />
+    <Compile Include="Nodes\Node.cs" />
+    <Compile Include="Nodes\NodeId.cs" />
+    <Compile Include="Nodes\NodeState.cs" />
+    <Compile Include="NoTraceMessage.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Source\Check.cs" />
+    <Compile Include="Source\Enums.cs" />
+    <Compile Include="Source\IMessage.cs" />
+    <Compile Include="Source\Message.cs" />
+    <Compile Include="Source\ToolBox.cs" />
+    <Compile Include="Source\TorrentException.cs" />
+    <Compile Include="Source\UriHelper.cs" />
+    <Compile Include="Source\VersionInfo.cs" />
+    <Compile Include="TransactionId.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ClassDiagram.cd" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
