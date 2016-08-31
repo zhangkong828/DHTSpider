@@ -15,7 +15,7 @@ DHTSpider 是一个由C#编写的 DHT 爬虫, 从全球` DHT ` 网络里"`嗅探
 
 使用 `MongoDB` 进行数据存储.
 
-使用 `ElasticSearch` 进行全文检索.
+使用 `ElasticSearch` 进行全文检索(待定).
 
 
 ## 环境
