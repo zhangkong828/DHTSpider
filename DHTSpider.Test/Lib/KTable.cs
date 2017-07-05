@@ -11,14 +11,12 @@ namespace DHTSpider.Test.Lib
     {
         public KTable(int maxsize)
         {
-            NodeId = Utils.CreateNodeId();
-            NodeIdString = Utils.GetNodeIdString(NodeId);
+            NodeId = Utils.RandomID();
             MaxSize = maxsize;
             Nodes = new List<Node>();
         }
 
         public byte[] NodeId { get; set; }
-        public string NodeIdString { get; set; }
         public List<Node> Nodes { get; set; }
         public int MaxSize { get; set; }
 

@@ -10,7 +10,7 @@ namespace DHTSpider.Test.Lib
     {
         static readonly Random random = new Random();
 
-        public static byte[] CreateNodeId()
+        public static byte[] RandomID()
         {
             byte[] b = new byte[20];
             lock (random)
@@ -24,19 +24,20 @@ namespace DHTSpider.Test.Lib
         }
 
 
-        public static void GenNeighborID()
+        public static byte[] GenNeighborID(byte[] target, byte[] nid)
         {
-
+            var nodeid = new byte[20];
+            Array.Copy(target, nodeid, 10);
+            Array.Copy(nid, 10, nodeid, 10, 10);
+            return nodeid;
         }
 
 
-
-
-        /// <summary>
-        /// 字节数组转16进制字符串
-        /// </summary>
-        /// <param name="bytes"></param>
-        /// <returns></returns>
+        public static byte[] StringToByte(string str)
+        {
+            return Encoding.UTF8.GetBytes(str);
+        }
+        
         public static string ByteToHexStr(byte[] bytes)
         {
             string returnStr = "";

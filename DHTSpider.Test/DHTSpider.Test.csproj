@@ -52,8 +52,10 @@
     <Compile Include="BEncoding\BEncodingException.cs" />
     <Compile Include="BEncoding\IBEncodedValue.cs" />
     <Compile Include="BEncoding\RawReader.cs" />
+    <Compile Include="Lib\BencodeUtility.cs" />
     <Compile Include="Lib\Bencoding.cs" />
     <Compile Include="Lib\KTable.cs" />
+    <Compile Include="Lib\Logger.cs" />
     <Compile Include="Lib\Spider.cs" />
     <Compile Include="Lib\Utils.cs" />
     <Compile Include="Listeners\UdpListener.cs" />

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DHTSpider.Test.Lib;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -104,9 +105,11 @@ namespace DHTSpider.Test.Listeners
             {
                 if (endpoint.Address != IPAddress.Any)
                     client.Send(buffer, buffer.Length, endpoint);
+                Logger.Info($"{endpoint.ToString()} {buffer.Length} {Encoding.ASCII.GetString(buffer)}");
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                Logger.Error("UdpListener Send " + ex.Message);
             }
         }
     }
