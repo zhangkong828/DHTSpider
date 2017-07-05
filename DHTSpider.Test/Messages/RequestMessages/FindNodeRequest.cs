@@ -8,5 +8,6 @@ namespace DHTSpider.Test.Messages.RequestMessages
 {
     public class FindNodeRequest : Message
     {
+
     }
 }

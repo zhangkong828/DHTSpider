@@ -92,7 +92,7 @@ namespace DHTSpider.Test.Listeners
                 }
             }
         }
-        public void OnMessageReceived(byte[] buffer, IPEndPoint endpoint)
+        private void OnMessageReceived(byte[] buffer, IPEndPoint endpoint)
         {
             MessageReceived?.Invoke(buffer, endpoint);
         }

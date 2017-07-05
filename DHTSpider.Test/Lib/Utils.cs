@@ -20,7 +20,7 @@ namespace DHTSpider.Test.Lib
 
         public static string GetNodeIdString(byte[] nid)
         {
-            return byteToHexStr(nid);
+            return ByteToHexStr(nid);
         }
 
 
@@ -37,7 +37,7 @@ namespace DHTSpider.Test.Lib
         /// </summary>
         /// <param name="bytes"></param>
         /// <returns></returns>
-        public static string byteToHexStr(byte[] bytes)
+        public static string ByteToHexStr(byte[] bytes)
         {
             string returnStr = "";
             if (bytes != null)

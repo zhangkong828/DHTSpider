@@ -18,14 +18,20 @@ namespace DHTSpider.Test.Lib
         }
 
 
-        public static IBObject Decode(byte[] bytes)
+        public static IBObject DecodeBObject(byte[] bytes)
         {
             return parser.Parse(bytes);
         }
 
-        public static IBObject Decode(string str)
+        public static IBObject DecodeBObject(string str)
         {
             return parser.ParseString(str);
+        }
+
+
+        public static BDictionary DecodeBDictionary(byte[] bytes)
+        {
+            return parser.Parse<BDictionary>(bytes);
         }
     }
 }

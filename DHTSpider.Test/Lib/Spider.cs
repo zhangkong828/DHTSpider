@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace DHTSpider.Test.Lib
@@ -23,9 +24,56 @@ namespace DHTSpider.Test.Lib
             udp = new UdpListener(localAddress);
         }
 
+        public void Start()
+        {
+            udp.Start();
+            udp.MessageReceived += OnMessageReceived;
+
+            Task.Run(() =>
+            {
+                while (true)
+                {
+                    if (true)//Todo
+                    {
+                        JoinDHTNetwork();
+                        MakeNeighbours();
+                    }
+                    Thread.Sleep(1000);
+                }
+
+            });
+        }
+
+        private void JoinDHTNetwork()
+        {
+            foreach (var item in BOOTSTRAP_NODES)
+            {
+                SendFindNodeRequest(item);
+            }
+        }
+        private void MakeNeighbours()
+        {
+            foreach (var node in ktable.Nodes)
+            {
+                SendFindNodeRequest(node.Address, node.NodeId);
+            }
+            ktable.Nodes.Clear();
+        }
 
         private void SendMessage(object msg, IPEndPoint localAddress)
         {
+
+        }
+
+        private void OnMessageReceived(byte[] buffer, IPEndPoint endpoint)
+        {
+            var data = Bencoding.DecodeBDictionary(buffer);
+        }
+
+
+        private void SendFindNodeRequest(IPEndPoint localAddress, byte[] nid = null)
+        {
+            //Todo
 
         }
     }
