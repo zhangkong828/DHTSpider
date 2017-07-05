@@ -18,6 +18,8 @@ namespace DHTSpider.Test.Lib
             new IPEndPoint(Dns.GetHostEntry("dht.transmissionbt.com").AddressList[0], 6881)
         };
 
+        public static int TotalCount = 0;
+
         private static KTable ktable = new KTable(4000);
 
         private UdpListener udpClinet;
@@ -35,12 +37,13 @@ namespace DHTSpider.Test.Lib
             {
                 while (true)
                 {
-                    if (true)//Todo
+                    if (TotalCount < 1000)//Todo
                     {
+                        Logger.Default($"TotalCount : {TotalCount}");
                         JoinDHTNetwork();
                         MakeNeighbours();
                     }
-                    Thread.Sleep(3000);
+                    Thread.Sleep(5000);
                 }
 
             });
@@ -93,6 +96,7 @@ namespace DHTSpider.Test.Lib
         {
             try
             {
+                Logger.Info($"OnMessageReceived : {endpoint.ToString()} {buffer.Length} {Encoding.ASCII.GetString(buffer)}");
                 var msg = BencodeUtility.DecodeDictionary(buffer);
                 if (msg.ContainsKey("y") && msg["y"].ToString() == "r" && msg.ContainsKey("r"))
                 {
@@ -228,6 +232,7 @@ namespace DHTSpider.Test.Lib
                     var bytes = BencodeUtility.Encode(sendmsg).ToArray();
                     udpClinet.Send(bytes, address);
 
+                    TotalCount++;
                     Logger.Success($"InfoHash:{infohash} Address:{address.Address} Port:{port}");
                 }
             }

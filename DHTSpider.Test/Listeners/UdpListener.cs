@@ -105,7 +105,7 @@ namespace DHTSpider.Test.Listeners
             {
                 if (endpoint.Address != IPAddress.Any)
                     client.Send(buffer, buffer.Length, endpoint);
-                Logger.Info($"{endpoint.ToString()} {buffer.Length} {Encoding.ASCII.GetString(buffer)}");
+                //Logger.Info($"{endpoint.ToString()} {buffer.Length} {Encoding.ASCII.GetString(buffer)}");
             }
             catch (Exception ex)
             {
