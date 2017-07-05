@@ -96,7 +96,6 @@ namespace DHTSpider.Test.Lib
         {
             try
             {
-                Logger.Info($"OnMessageReceived : {endpoint.ToString()} {buffer.Length} {Encoding.ASCII.GetString(buffer)}");
                 var msg = BencodeUtility.DecodeDictionary(buffer);
                 if (msg.ContainsKey("y") && msg["y"].ToString() == "r" && msg.ContainsKey("r"))
                 {
@@ -113,6 +112,7 @@ namespace DHTSpider.Test.Lib
                 }
                 else if (msg.ContainsKey("y") && msg["y"].ToString() == "q" && msg.ContainsKey("q") && msg["q"].ToString() == "announce_peer")
                 {
+                    Logger.Info($"OnAnnouncePeerRequest : {endpoint.ToString()} {buffer.Length} {Encoding.ASCII.GetString(buffer)}");
                     OnAnnouncePeerRequest(endpoint, msg);
                 }
 
