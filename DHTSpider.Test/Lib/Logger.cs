@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NLog;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,6 +9,8 @@ namespace DHTSpider.Test.Lib
 {
     public class Logger
     {
+        //private static Logger logger = LogManager.GetCurrentClassLogger();
+
         public static void Error(string msg)
         {
             Console.ForegroundColor = ConsoleColor.Red;
