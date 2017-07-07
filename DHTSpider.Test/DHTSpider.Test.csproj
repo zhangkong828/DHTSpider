@@ -35,7 +35,7 @@
     <Reference Include="BencodeNET, Version=2.2.2.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\BencodeNET.2.2.2\lib\net45\BencodeNET.dll</HintPath>
     </Reference>
-    <Reference Include="NLog, Version=4.0.0.0, Culture=neutral, PublicKeyToken=5120e14c03d0593c, processorArchitecture=MSIL">
+    <Reference Include="NLog">
       <HintPath>..\packages\NLog.4.4.11\lib\net45\NLog.dll</HintPath>
     </Reference>
     <Reference Include="System" />
@@ -55,20 +55,15 @@
     <Compile Include="BEncoding\BEncodingException.cs" />
     <Compile Include="BEncoding\IBEncodedValue.cs" />
     <Compile Include="BEncoding\RawReader.cs" />
+    <Compile Include="EasyTokenManager.cs" />
     <Compile Include="Lib\BencodeUtility.cs" />
     <Compile Include="Lib\Bencoding.cs" />
-    <Compile Include="Lib\KTable.cs" />
     <Compile Include="Lib\Logger.cs" />
-    <Compile Include="Lib\Spider.cs" />
     <Compile Include="Lib\Utils.cs" />
     <Compile Include="Listeners\UdpListener.cs" />
-    <Compile Include="Messages\Message.cs" />
-    <Compile Include="Messages\RequestMessages\FindNodeRequest.cs" />
-    <Compile Include="Messages\ResponseMessages\FindNodeResponse.cs" />
-    <Compile Include="Nodes\Node.cs" />
-    <Compile Include="Nodes\NodeState.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Spider.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
@@ -82,6 +77,12 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Model\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Tancoder.Torrent\Tancoder.Torrent.csproj">
+      <Project>{b3fdea8e-20f3-4be3-b73a-505b45ba9501}</Project>
+      <Name>Tancoder.Torrent</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

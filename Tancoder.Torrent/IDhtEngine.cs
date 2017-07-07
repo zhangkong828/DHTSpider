@@ -45,28 +45,28 @@ namespace Tancoder.Torrent
     }
     public interface IDhtEngine : IDisposable
     {
-        event EventHandler StateChanged;
+        //event EventHandler StateChanged;
 
         bool Disposed { get; }
         NodeId LocalId { get; }
-        DhtState State { get; }
+        //DhtState State { get; }
         ITokenManager TokenManager { get; }
 
         void Add(BEncodedList nodes);
         void Add(IEnumerable<Node> enumerable);
         void Add(Node node);
 
-        void Announce(InfoHash infohash, int port);
+        //void Announce(InfoHash infohash, int port);
         void GetAnnounced(InfoHash infohash, IPEndPoint endpoint);
         void GetPeers(InfoHash infohash);
 
         GetPeersResult QueryGetPeers(NodeId infohash);
         FindPeersResult QueryFindNode(NodeId target);
 
-        byte[] SaveNodes();
+        //byte[] SaveNodes();
         void Send(DhtMessage msg, IPEndPoint endpoint);
         
-        void Start(Node[] initialNodes);
+        void Start();
         NodeId GetNeighborId(NodeId target);
         void Stop();
     }

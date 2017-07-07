@@ -9,12 +9,11 @@ namespace DHTSpider.Test.Lib
 {
     public class Logger
     {
-        //private static Logger logger = LogManager.GetCurrentClassLogger();
+        private static ILogger logger = LogManager.GetCurrentClassLogger();
 
         public static void Error(string msg)
         {
-            Console.ForegroundColor = ConsoleColor.Red;
-            Write(msg);
+            logger.Error(msg);
         }
 
         public static void Success(string msg)
@@ -25,8 +24,7 @@ namespace DHTSpider.Test.Lib
 
         public static void Info(string msg)
         {
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Write(msg);
+            logger.Info(msg);
         }
 
         public static void Default(string msg)
