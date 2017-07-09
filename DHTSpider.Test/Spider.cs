@@ -1,6 +1,7 @@
 ﻿using DHTSpider.Test.Lib;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
@@ -8,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Tancoder.Torrent;
 using Tancoder.Torrent.BEncoding;
+using Tancoder.Torrent.Client;
 using Tancoder.Torrent.Dht;
 using Tancoder.Torrent.Dht.Listeners;
 using Tancoder.Torrent.Dht.Messages;
@@ -28,6 +30,7 @@ namespace DHTSpider.Test
             listener = new DhtListener(localAddress);
             KTable = new HashSet<Node>();
             TokenManager = new EasyTokenManager();
+            Queue = new Queue<KeyValuePair<InfoHash, IPEndPoint>>();
         }
         private object locker = new object();
         public IMetaDataFilter Filter { get; set; }
@@ -38,6 +41,7 @@ namespace DHTSpider.Test
 
         public HashSet<Node> KTable { get; set; }
 
+        public Queue<KeyValuePair<InfoHash, IPEndPoint>> Queue { get; set; }
         private bool disposed = false;
         public bool Disposed
         {
@@ -68,8 +72,9 @@ namespace DHTSpider.Test
             {
                 if (!KTable.Contains(node))
                 {
-                    lock (KTable)
+                    lock (locker)
                     {
+                        Logger.Fatal($"Add  {KTable.Count} {node.Id} {node.Token} {node.EndPoint}");
                         KTable.Add(node);
                     }
                 }
@@ -84,10 +89,19 @@ namespace DHTSpider.Test
 
         public void GetAnnounced(InfoHash infohash, IPEndPoint endpoint)
         {
-            if (Filter == null || (Filter != null && !Filter.Ignore(infohash)))
+            try
             {
-                Logger.Success($"InfoHash:{infohash} Address:{endpoint.Address} Port:{endpoint.Port}");
-                NewMetadata(this, new NewMetadataEventArgs(infohash, endpoint));
+                if (Filter == null || (Filter != null && Filter.Ignore(infohash)))
+                {
+                    //Logger.Info($"InfoHash:{infohash} Address:{endpoint.Address} Port:{endpoint.Port}");
+                    NewMetadata?.Invoke(this, new NewMetadataEventArgs(infohash, endpoint));
+                    Queue.Enqueue(new KeyValuePair<InfoHash, IPEndPoint>(infohash, endpoint));
+                }
+            }
+            catch (Exception)
+            {
+
+                throw;
             }
         }
 
@@ -102,7 +116,7 @@ namespace DHTSpider.Test
 
         public void GetPeers(InfoHash infohash)
         {
-            throw new NotImplementedException();
+            Logger.Warn($"GetPeers");
         }
 
         public FindPeersResult QueryFindNode(NodeId target)
@@ -110,8 +124,8 @@ namespace DHTSpider.Test
             var result = new FindPeersResult()
             {
                 Found = false,
-                Nodes = KTable.Take(8).ToList(),
-                //Nodes = KTable.OrderByDescending(n => n.LastSeen).Take(8).ToList(),
+                //Nodes = KTable.Take(8).ToList(),
+                Nodes = KTable.OrderByDescending(n => n.LastSeen).Take(8).ToList(),
             };
             return result;
         }
@@ -151,6 +165,12 @@ namespace DHTSpider.Test
                 }
 
             });
+
+
+            Task.Run(() =>
+            {
+                Download();
+            });
         }
         public void Stop()
         {
@@ -175,16 +195,31 @@ namespace DHTSpider.Test
 
         private void SendFindNodeRequest(IPEndPoint address, NodeId nodeid = null)
         {
+            FindNode msg = null;
+
+            var nid = nodeid == null ? LocalId : GetNeighborId(nodeid);
             try
             {
-                var nid = nodeid == null ? LocalId : GetNeighborId(nodeid);
-                FindNode msg = new FindNode(nid, NodeId.Create());
+                msg = new FindNode(nid, NodeId.Create());
                 Send(msg, address);
-
+                var list = new List<string>();
+                foreach (var item in msg.Parameters)
+                {
+                    list.Add($"[key]={item.Key}[val]={item.Value}");
+                }
+                var str = string.Join("&", list);
+                Logger.Info($"SendFindNodeRequest OK nodeid={nodeid == null} {nid} {msg.MessageType} {str}");
             }
             catch (Exception ex)
             {
-                Logger.Error("SendFindNodeRequest " + ex.Message + ex.StackTrace);
+                var list = new List<string>();
+                foreach (var item in msg.Parameters)
+                {
+                    list.Add($"[key]={item.Key}[val]={item.Value}");
+                }
+                var str = string.Join("&", list);
+                //Logger.Fatal($"SendFindNodeRequest Error nodeid={nodeid == null} {nid} {msg.MessageType} {str}");
+                //Logger.Fatal("SendFindNodeRequest Exception" + ex.Message + ex.StackTrace);
             }
         }
 
@@ -199,7 +234,10 @@ namespace DHTSpider.Test
                 string error;
                 if (MessageFactory.TryNoTraceDecodeMessage((BEncodedDictionary)BEncodedValue.Decode(buffer, 0, buffer.Length, false), out message, out error))
                 {
-                    Logger.Info($"OnMessageReceived  {message.MessageType}");
+                    if (message.MessageType.ToString() != "q")
+                    {
+                        Logger.Info($"OnMessageReceived  {message.MessageType}");
+                    }
                     if (message is QueryMessage)
                     {
                         message.Handle(this, new Node(message.Id, endpoint));
@@ -207,17 +245,68 @@ namespace DHTSpider.Test
                 }
                 else
                 {
-                    Logger.Error("OnMessageReceived  错误的消息");
+                    //Logger.Error("OnMessageReceived  错误的消息");
                 }
 
             }
             catch (Exception ex)
             {
-                Logger.Error("OnMessageReceived " + ex.Message);
+                Logger.Error("OnMessageReceived " + ex.Message + ex.StackTrace);
             }
 
         }
 
+
+        private void Download()
+        {
+            while (true)
+            {
+                try
+                {
+                    KeyValuePair<InfoHash, IPEndPoint> info = new KeyValuePair<InfoHash, IPEndPoint>();
+                    if (Queue.Count > 0)
+                    {
+                        lock (locker)
+                        {
+                            if (Queue.Count > 0)
+                            {
+                                info = Queue.Dequeue();
+                            }
+                        }
+                    }
+                    if (info.Key == null || info.Value == null)
+                    {
+                        Thread.Sleep(1000);
+                        continue;
+                    }
+                    var hash = BitConverter.ToString(info.Key.Hash).Replace("-", "");
+                    using (WireClient client = new WireClient(info.Value))
+                    {
+                        var metadata = client.GetMetaData(info.Key);
+                        if (metadata != null)
+                        {
+                            var name = ((BEncodedString)metadata["name"]).Text;
+                            if (true)//TODO
+                                File.WriteAllBytes(@"c:\torrent\" + hash + ".torrent", metadata.Encode());
+
+                            var list = new List<string>();
+                            foreach (var item in metadata)
+                            {
+                                list.Add($"[key]={item.Key}[val]={item.Value}");
+                            }
+                            var str = string.Join("&", list);
+                            Logger.Warn($"{hash} {name} {str}");
+                            Logger.Success(hash + " : " + name);
+                        }
+                    }
+
+                }
+                catch (Exception ex)
+                {
+                    Logger.Error($"Download {ex.Message} {ex.StackTrace}");
+                }
+            }
+        }
 
     }
 }

@@ -27,12 +27,25 @@ namespace DHTSpider.Test.Lib
             logger.Info(msg);
         }
 
-        public static void Default(string msg)
+        public static void Fatal(string msg)
         {
-            Console.ForegroundColor = ConsoleColor.White;
-            Write(msg);
+            logger.Fatal(msg);
         }
 
+        public static void Debug(string msg)
+        {
+            logger.Debug(msg);
+        }
+
+        public static void Trace(string msg)
+        {
+            logger.Trace(msg);
+        }
+
+        public static void Warn(string msg)
+        {
+            logger.Warn(msg);
+        }
         private static void Write(string msg)
         {
             Console.WriteLine("------------------------------------------------------");

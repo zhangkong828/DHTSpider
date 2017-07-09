@@ -36,8 +36,8 @@ namespace Tancoder.Torrent.Client
         {
             client = new TcpClient(new IPEndPoint(IPAddress.Any, localPort))
             {
-                SendTimeout = 5000,
-                ReceiveTimeout = 5000,
+                SendTimeout = 50000,
+                ReceiveTimeout = 50000,
             };
             EndPoint = endpoint;
         }
