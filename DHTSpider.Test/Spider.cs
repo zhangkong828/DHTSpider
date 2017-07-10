@@ -93,7 +93,7 @@ namespace DHTSpider.Test
             {
                 if (Filter == null || (Filter != null && Filter.Ignore(infohash)))
                 {
-                    //Logger.Info($"InfoHash:{infohash} Address:{endpoint.Address} Port:{endpoint.Port}");
+                    Logger.Info($"InfoHash:{infohash} Address:{endpoint.Address} Port:{endpoint.Port}");
                     NewMetadata?.Invoke(this, new NewMetadataEventArgs(infohash, endpoint));
                     Queue.Enqueue(new KeyValuePair<InfoHash, IPEndPoint>(infohash, endpoint));
                 }
@@ -170,6 +170,15 @@ namespace DHTSpider.Test
             Task.Run(() =>
             {
                 Download();
+            });
+
+            Task.Run(() =>
+            {
+                while (true)
+                {
+                    Logger.Success($"Queue:{Queue.Count}");
+                    Thread.Sleep(5000);
+                }
             });
         }
         public void Stop()
