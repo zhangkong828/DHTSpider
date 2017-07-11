@@ -57,10 +57,6 @@
       <Project>{236fafd0-c812-456b-bb9e-3d975b21801a}</Project>
       <Name>DHTSpider.Core.Spider</Name>
     </ProjectReference>
-    <ProjectReference Include="..\DHTSpider.Core.Store\DHTSpider.Core.Store.csproj">
-      <Project>{112e351d-44c9-441b-882b-37c02ee044df}</Project>
-      <Name>DHTSpider.Core.Store</Name>
-    </ProjectReference>
     <ProjectReference Include="..\Tancoder.Torrent\Tancoder.Torrent.csproj">
       <Project>{b3fdea8e-20f3-4be3-b73a-505b45ba9501}</Project>
       <Name>Tancoder.Torrent</Name>

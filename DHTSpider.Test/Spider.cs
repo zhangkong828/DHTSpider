@@ -166,11 +166,14 @@ namespace DHTSpider.Test
 
             });
 
-
-            Task.Run(() =>
+            for (int i = 0; i < 20; i++)
             {
-                Download();
-            });
+                Task.Run(() =>
+                {
+                    Download();
+                });
+            }
+           
 
             Task.Run(() =>
             {
