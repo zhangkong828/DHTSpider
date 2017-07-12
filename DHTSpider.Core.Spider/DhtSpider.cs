@@ -1,41 +1,47 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using Tancoder.Torrent;
 using Tancoder.Torrent.BEncoding;
+using Tancoder.Torrent.Client;
 using Tancoder.Torrent.Dht;
 using Tancoder.Torrent.Dht.Listeners;
 using Tancoder.Torrent.Dht.Messages;
 
 namespace DHTSpider.Core.Spider
 {
-    public class DhtSpider : ISpider, IDhtEngine
+    public class DHTSpider: IDhtEngine
     {
-        private bool disposed = false;
-        private Queue<KeyValuePair<InfoHash, IPEndPoint>> seeds = new Queue<KeyValuePair<InfoHash, IPEndPoint>>();
+        public static List<IPEndPoint> BOOTSTRAP_NODES = new List<IPEndPoint>() {
+            new IPEndPoint(Dns.GetHostEntry("router.bittorrent.com").AddressList[0], 6881),
+            new IPEndPoint(Dns.GetHostEntry("dht.transmissionbt.com").AddressList[0], 6881)
+        };
 
-        public DhtSpider(DhtSpiderSetting setting, DhtListener listener)
+        public DHTSpider(IPEndPoint localAddress)
         {
-            if (listener == null)
-                throw new ArgumentNullException("setting");
-            if (listener == null)
-                throw new ArgumentNullException("listener");
 
-            MaxSendQueue = setting.MaxCacheCount;
-            MaxFindSendPer = setting.MaxFindSendPer;
-            MaxWaitCount = setting.MaxWaitCount;
-            MaxCacheCount = setting.MaxCacheCount;
-
-            TokenManager = new EasyTokenManager();
             LocalId = NodeId.Create();
-            MessageLoop = new MessageLoop(this, listener);
-            MessageLoop.ReceivedMessage += MessageLoop_ReceivedMessage;
+            listener = new DhtListener(localAddress);
+            KTable = new HashSet<Node>();
+            TokenManager = new EasyTokenManager();
+            Queue = new Queue<KeyValuePair<InfoHash, IPEndPoint>>();
         }
+        private object locker = new object();
+        public IMetaDataFilter Filter { get; set; }
 
-        public event NewMetadataEvent NewMetadata;
-        public event EventHandler StateChanged;
+        public NodeId LocalId { get; set; }
 
+        public ITokenManager TokenManager { get; private set; }
+
+        public HashSet<Node> KTable { get; set; }
+
+        public Queue<KeyValuePair<InfoHash, IPEndPoint>> Queue { get; set; }
+        private bool disposed = false;
         public bool Disposed
         {
             get
@@ -43,31 +49,12 @@ namespace DHTSpider.Core.Spider
                 return disposed;
             }
         }
-        public IMetaDataFilter Filter { get; set; }
-        public NodeId LocalId { get; private set; }
-        public int MaxSendQueue { get; set; }
-        public int MaxFindSendPer { get; set; }
-        public int MaxWaitCount { get; set; }
-        public MessageLoop MessageLoop { get; private set; }
-        public Queue<Node> NextNodes { get; private set; } = new Queue<Node>();
-        public DhtState State { get; private set; }
-        public ITokenManager TokenManager { get; private set; }
-        public HashSet<Node> VistedNodes { get; private set; } = new HashSet<Node>();
-        public int MaxCacheCount { get; set; }
 
-        public void Add(Node node)
+        public event NewMetadataEvent NewMetadata;
+
+        public void Add(BEncodedList nodes)
         {
-            lock (NextNodes)
-            {
-                if (!VistedNodes.Contains(node) && NextNodes.Count < MaxWaitCount)
-                {
-                    NextNodes.Enqueue(node);
-                    lock (VistedNodes)
-                    {
-                        VistedNodes.Add(node);
-                    }
-                }
-            }
+            Add(Node.FromCompactNode(nodes));
         }
 
         public void Add(IEnumerable<Node> nodes)
@@ -78,14 +65,19 @@ namespace DHTSpider.Core.Spider
             }
         }
 
-        public void Add(BEncodedList nodes)
+        public void Add(Node node)
         {
-            Add(Node.FromCompactNode(nodes));
-        }
-
-        public void Announce(InfoHash infohash, int port)
-        {
-            throw new NotImplementedException();
+            lock (locker)
+            {
+                if (!KTable.Contains(node))
+                {
+                    lock (locker)
+                    {
+                        Logger.Fatal($"Add  {KTable.Count} {node.Id} {node.Token} {node.EndPoint}");
+                        KTable.Add(node);
+                    }
+                }
+            }
         }
 
         public void Dispose()
@@ -96,45 +88,34 @@ namespace DHTSpider.Core.Spider
 
         public void GetAnnounced(InfoHash infohash, IPEndPoint endpoint)
         {
-            if (Filter == null || (Filter != null && !Filter.Ignore(infohash)))
+            try
             {
-                lock (seeds)
+                if (Filter == null || (Filter != null && Filter.Ignore(infohash)))
                 {
-                    seeds.Enqueue(new KeyValuePair<InfoHash, IPEndPoint>(infohash, endpoint));
+                    Logger.Info($"InfoHash:{infohash} Address:{endpoint.Address} Port:{endpoint.Port}");
+                    NewMetadata?.Invoke(this, new NewMetadataEventArgs(infohash, endpoint));
+                    Queue.Enqueue(new KeyValuePair<InfoHash, IPEndPoint>(infohash, endpoint));
                 }
-                RaiseNewMetadata(infohash, endpoint);
             }
+            catch (Exception)
+            {
+
+                throw;
+            }
+        }
+
+        public NodeId GetNeighborId(NodeId target)
+        {
+            byte[] nid = new byte[target.Bytes.Length];
+            Array.Copy(target.Bytes, nid, nid.Length / 2);
+            Array.Copy(LocalId.Bytes, nid.Length / 2,
+                nid, nid.Length / 2, nid.Length / 2);
+            return new NodeId(nid);
         }
 
         public void GetPeers(InfoHash infohash)
         {
-            throw new NotImplementedException();
-        }
-
-        public Dictionary<string, object> GetReport()
-        {
-            Dictionary<string, object> result = new Dictionary<string, object>();
-            result["Seeds Waited"] = seeds.Count;
-            result["Cache Nodes"] = VistedNodes.Count;
-            result["Sends Waited"] = NextNodes.Count;
-
-            return result;
-        }
-
-        public int GetWaitSeedsCount()
-        {
-            return seeds.Count;
-        }
-
-        public KeyValuePair<InfoHash, IPEndPoint> Pop()
-        {
-            lock (seeds)
-            {
-                if (seeds.Count > 0)
-                    return seeds.Dequeue();
-                else
-                    return new KeyValuePair<InfoHash, IPEndPoint>();
-            }
+            Logger.Warn($"GetPeers");
         }
 
         public FindPeersResult QueryFindNode(NodeId target)
@@ -142,8 +123,8 @@ namespace DHTSpider.Core.Spider
             var result = new FindPeersResult()
             {
                 Found = false,
-                Nodes = VistedNodes.Take(8).ToList(),
-                //Nodes = VistedNodes.OrderByDescending(n => n.LastSeen).Take(8).ToList(),
+                //Nodes = KTable.Take(8).ToList(),
+                Nodes = KTable.OrderByDescending(n => n.LastSeen).Take(8).ToList(),
             };
             return result;
         }
@@ -158,108 +139,185 @@ namespace DHTSpider.Core.Spider
             return result;
         }
 
-        public byte[] SaveNodes()
-        {
-            throw new NotImplementedException();
-        }
 
         public void Send(DhtMessage msg, IPEndPoint endpoint)
         {
-            if (msg is FindNodeResponse && MessageLoop.GetWaitSendCount() > MaxSendQueue)
-                return;
-            MessageLoop.EnqueueSend(msg, endpoint);
-        }
-
-        public void SendFindNodes()
-        {
-            var waitsend = MessageLoop.GetWaitSendCount();
-            lock (NextNodes)
-            {
-                for (int i = 0; i < NextNodes.Count && waitsend < MaxFindSendPer; i++)
-                {
-                    var next = NextNodes.Dequeue();
-                    SendFindNode(next);
-                    waitsend++;
-                }
-            }
+            var buffer = msg.Encode();
+            listener.Send(buffer, endpoint);
         }
 
         public void Start()
         {
-            var bootstrap = new Node[]
-            {
-                new Node
-                (
-                    NodeId.Create(),
-                    new IPEndPoint(Dns.GetHostEntry("router.bittorrent.com").AddressList[0], 6881)
-                ),
-                new Node
-                (
-                    NodeId.Create(),
-                    new IPEndPoint(Dns.GetHostEntry("dht.transmissionbt.com").AddressList[0], 6881)
-                )
-            };
-            Start(bootstrap);
-        }
+            listener.Start();
+            listener.MessageReceived += OnMessageReceived;
 
-        public void Start(Node[] initialNodes)
-        {
-            MessageLoop.Start();
-            foreach (var item in initialNodes)
+            Task.Run(() =>
             {
-                SendFindNode(item);
+                while (true)
+                {
+                    if (true)//Todo
+                    {
+                        JoinDHTNetwork();
+                        MakeNeighbours();
+                    }
+                    Thread.Sleep(3000);
+                }
+
+            });
+
+            for (int i = 0; i < 20; i++)
+            {
+                Task.Run(() =>
+                {
+                    Download();
+                });
             }
-            RaiseStateChanged(DhtState.Ready);
-        }
 
+
+            Task.Run(() =>
+            {
+                while (true)
+                {
+                    Logger.Success($"Queue:{Queue.Count}");
+                    Thread.Sleep(5000);
+                }
+            });
+        }
         public void Stop()
         {
-            MessageLoop.Stop();
+            listener.Stop();
         }
 
-        private void MessageLoop_ReceivedMessage(object sender, MessageEventArgs e)
+        private void JoinDHTNetwork()
         {
-            if (e.Message is FindNodeResponse)
+            foreach (var item in BOOTSTRAP_NODES)
             {
-                var r = e.Message as FindNodeResponse;
-                Add(Node.FromCompactNode(r.Nodes));
+                SendFindNodeRequest(item);
             }
-            if (VistedNodes.Count > MaxCacheCount)
+        }
+        private void MakeNeighbours()
+        {
+            foreach (var node in KTable)
             {
-                lock (VistedNodes)
+                SendFindNodeRequest(node.EndPoint, node.Id);
+            }
+            KTable.Clear();
+        }
+
+        private void SendFindNodeRequest(IPEndPoint address, NodeId nodeid = null)
+        {
+            FindNode msg = null;
+
+            var nid = nodeid == null ? LocalId : GetNeighborId(nodeid);
+            try
+            {
+                msg = new FindNode(nid, NodeId.Create());
+                Send(msg, address);
+                var list = new List<string>();
+                foreach (var item in msg.Parameters)
                 {
-                    VistedNodes.Clear();
+                    list.Add($"[key]={item.Key}[val]={item.Value}");
+                }
+                var str = string.Join("&", list);
+                Logger.Info($"SendFindNodeRequest OK nodeid={nodeid == null} {nid} {msg.MessageType} {str}");
+            }
+            catch (Exception ex)
+            {
+                var list = new List<string>();
+                foreach (var item in msg.Parameters)
+                {
+                    list.Add($"[key]={item.Key}[val]={item.Value}");
+                }
+                var str = string.Join("&", list);
+                //Logger.Fatal($"SendFindNodeRequest Error nodeid={nodeid == null} {nid} {msg.MessageType} {str}");
+                //Logger.Fatal("SendFindNodeRequest Exception" + ex.Message + ex.StackTrace);
+            }
+        }
+
+        private DhtListener listener;
+
+
+        private void OnMessageReceived(byte[] buffer, IPEndPoint endpoint)
+        {
+            try
+            {
+                DhtMessage message;
+                string error;
+                if (MessageFactory.TryNoTraceDecodeMessage((BEncodedDictionary)BEncodedValue.Decode(buffer, 0, buffer.Length, false), out message, out error))
+                {
+                    if (message.MessageType.ToString() != "q")
+                    {
+                        Logger.Info($"OnMessageReceived  {message.MessageType}");
+                    }
+                    if (message is QueryMessage)
+                    {
+                        message.Handle(this, new Node(message.Id, endpoint));
+                    }
+                }
+                else
+                {
+                    //Logger.Error("OnMessageReceived  错误的消息");
+                }
+
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("OnMessageReceived " + ex.Message + ex.StackTrace);
+            }
+
+        }
+
+
+        private void Download()
+        {
+            while (true)
+            {
+                try
+                {
+                    KeyValuePair<InfoHash, IPEndPoint> info = new KeyValuePair<InfoHash, IPEndPoint>();
+                    if (Queue.Count > 0)
+                    {
+                        lock (locker)
+                        {
+                            if (Queue.Count > 0)
+                            {
+                                info = Queue.Dequeue();
+                            }
+                        }
+                    }
+                    if (info.Key == null || info.Value == null)
+                    {
+                        Thread.Sleep(1000);
+                        continue;
+                    }
+                    var hash = BitConverter.ToString(info.Key.Hash).Replace("-", "");
+                    using (WireClient client = new WireClient(info.Value))
+                    {
+                        var metadata = client.GetMetaData(info.Key);
+                        if (metadata != null)
+                        {
+                            var name = ((BEncodedString)metadata["name"]).Text;
+                            if (true)//TODO
+                                File.WriteAllBytes(@"c:\torrent\" + hash + ".torrent", metadata.Encode());
+
+                            var list = new List<string>();
+                            foreach (var item in metadata)
+                            {
+                                list.Add($"[key]={item.Key}[val]={item.Value}");
+                            }
+                            var str = string.Join("&", list);
+                            Logger.Warn($"{hash} {name} {str}");
+                            Logger.Success(hash + " : " + name);
+                        }
+                    }
+
+                }
+                catch (Exception ex)
+                {
+                    Logger.Error($"Download {ex.Message} {ex.StackTrace}");
                 }
             }
         }
-        private void RaiseNewMetadata(InfoHash infohash, IPEndPoint endpoint)
-        {
-            if (NewMetadata != null)
-                NewMetadata(this, new NewMetadataEventArgs(infohash, endpoint));
-        }
 
-        private void RaiseStateChanged(DhtState newState)
-        {
-            State = newState;
-
-            if (StateChanged != null)
-                StateChanged(this, EventArgs.Empty);
-        }
-
-        private void SendFindNode(Node node)
-        {
-            FindNode msg = new FindNode(GetNeighborId(node.Id), NodeId.Create());
-            //FindNode msg = new FindNode(LocalId, NodeId.Create());
-            Send(msg, node.EndPoint);
-        }
-
-        public NodeId GetNeighborId(NodeId target)
-        {
-            byte[] nid = new byte[target.Bytes.Length];
-            Array.Copy(target.Bytes, nid, nid.Length / 2);
-            Array.Copy(LocalId.Bytes, nid.Length / 2,
-                nid, nid.Length / 2, nid.Length / 2);
-            return new NodeId(nid);
-        }
     }
 }

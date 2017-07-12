@@ -32,9 +32,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="BencodeNET, Version=2.2.2.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\BencodeNET.2.2.2\lib\net45\BencodeNET.dll</HintPath>
-    </Reference>
     <Reference Include="NLog">
       <HintPath>..\packages\NLog.4.4.11\lib\net45\NLog.dll</HintPath>
     </Reference>
@@ -48,22 +45,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BEncoding\BEncodedDictionary.cs" />
-    <Compile Include="BEncoding\BEncodedList.cs" />
-    <Compile Include="BEncoding\BEncodedNumber.cs" />
-    <Compile Include="BEncoding\BEncodedString.cs" />
-    <Compile Include="BEncoding\BEncodingException.cs" />
-    <Compile Include="BEncoding\IBEncodedValue.cs" />
-    <Compile Include="BEncoding\RawReader.cs" />
-    <Compile Include="EasyTokenManager.cs" />
-    <Compile Include="Lib\BencodeUtility.cs" />
-    <Compile Include="Lib\Bencoding.cs" />
-    <Compile Include="Lib\Logger.cs" />
-    <Compile Include="Lib\Utils.cs" />
-    <Compile Include="Listeners\UdpListener.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Spider.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
@@ -75,10 +58,12 @@
     </None>
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
-    <Folder Include="Model\" />
-  </ItemGroup>
-  <ItemGroup>
+    <ProjectReference Include="..\DHTSpider.Core.Spider\DHTSpider.Core.Spider.csproj">
+      <Project>{236fafd0-c812-456b-bb9e-3d975b21801a}</Project>
+      <Name>DHTSpider.Core.Spider</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Tancoder.Torrent\Tancoder.Torrent.csproj">
       <Project>{b3fdea8e-20f3-4be3-b73a-505b45ba9501}</Project>
       <Name>Tancoder.Torrent</Name>

@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DHTSpider.Test.Lib
+namespace DHTSpider.Core.Spider
 {
     public class Logger
     {
@@ -14,12 +14,6 @@ namespace DHTSpider.Test.Lib
         public static void Error(string msg)
         {
             logger.Error(msg);
-        }
-
-        public static void Success(string msg)
-        {
-            Console.ForegroundColor = ConsoleColor.Green;
-            Write(msg);
         }
 
         public static void Info(string msg)
@@ -46,7 +40,16 @@ namespace DHTSpider.Test.Lib
         {
             logger.Warn(msg);
         }
-        private static void Write(string msg)
+
+
+        public static void Success(string msg)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            ConsoleWrite(msg);
+        }
+
+
+        public static void ConsoleWrite(string msg)
         {
             Console.WriteLine("------------------------------------------------------");
             Console.WriteLine($"[{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}]{msg}");
