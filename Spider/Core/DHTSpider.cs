@@ -93,7 +93,6 @@ namespace Spider.Core
             {
                 if (Filter == null || (Filter != null && Filter.Ignore(infohash)))
                 {
-                    Logger.Info($"InfoHash:{infohash} Address:{endpoint.Address} Port:{endpoint.Port}");
                     NewMetadata?.Invoke(this, new NewMetadataEventArgs(infohash, endpoint));
                     Queue.Enqueue(new KeyValuePair<InfoHash, IPEndPoint>(infohash, endpoint));
                 }
@@ -151,7 +150,7 @@ namespace Spider.Core
         {
             listener.Start();
             listener.MessageReceived += OnMessageReceived;
-           
+
             Task.Run(() =>
             {
                 while (true)
@@ -166,23 +165,6 @@ namespace Spider.Core
 
             });
 
-            for (int i = 0; i < 20; i++)
-            {
-                Task.Run(() =>
-                {
-                    Download();
-                });
-            }
-
-
-            Task.Run(() =>
-            {
-                while (true)
-                {
-                    Logger.Success($"Queue:{Queue.Count}");
-                    Thread.Sleep(5000);
-                }
-            });
         }
         public void Stop()
         {
@@ -214,13 +196,6 @@ namespace Spider.Core
             {
                 msg = new FindNode(nid, NodeId.Create());
                 Send(msg, address);
-                var list = new List<string>();
-                foreach (var item in msg.Parameters)
-                {
-                    list.Add($"[key]={item.Key}[val]={item.Value}");
-                }
-                var str = string.Join("&", list);
-                Logger.Info($"SendFindNodeRequest OK nodeid={nodeid == null} {nid} {msg.MessageType} {str}");
             }
             catch (Exception ex)
             {
@@ -248,7 +223,7 @@ namespace Spider.Core
                 {
                     if (message.MessageType.ToString() != "q")
                     {
-                        Logger.Info($"OnMessageReceived  {message.MessageType}");
+                        //Logger.Info($"OnMessageReceived  {message.MessageType}");
                     }
                     if (message is QueryMessage)
                     {
@@ -269,56 +244,7 @@ namespace Spider.Core
         }
 
 
-        private void Download()
-        {
-            while (true)
-            {
-                try
-                {
-                    KeyValuePair<InfoHash, IPEndPoint> info = new KeyValuePair<InfoHash, IPEndPoint>();
-                    if (Queue.Count > 0)
-                    {
-                        lock (locker)
-                        {
-                            if (Queue.Count > 0)
-                            {
-                                info = Queue.Dequeue();
-                            }
-                        }
-                    }
-                    if (info.Key == null || info.Value == null)
-                    {
-                        Thread.Sleep(1000);
-                        continue;
-                    }
-                    var hash = BitConverter.ToString(info.Key.Hash).Replace("-", "");
-                    using (WireClient client = new WireClient(info.Value))
-                    {
-                        var metadata = client.GetMetaData(info.Key);
-                        if (metadata != null)
-                        {
-                            var name = ((BEncodedString)metadata["name"]).Text;
-                            if (true)//TODO
-                                File.WriteAllBytes(@"c:\torrent\" + hash + ".torrent", metadata.Encode());
 
-                            var list = new List<string>();
-                            foreach (var item in metadata)
-                            {
-                                list.Add($"[key]={item.Key}[val]={item.Value}");
-                            }
-                            var str = string.Join("&", list);
-                            Logger.Warn($"{hash} {name} {str}");
-                            Logger.Success(hash + " : " + name);
-                        }
-                    }
-
-                }
-                catch (Exception ex)
-                {
-                    Logger.Error($"Download {ex.Message} {ex.StackTrace}");
-                }
-            }
-        }
 
     }
 }

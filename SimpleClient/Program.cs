@@ -14,16 +14,18 @@ namespace SimpleClient
             var spider = SpiderConfiguration.Create(new SpiderSetting()
             {
                 LocalPort = 6881,
-                IsSaveTorrent = false,
+                IsSaveTorrent = true,
                 TorrentSavePath = "",
                 MaxSpiderThreadCount = 2,
-                MaxDownLoadThreadCount = 30
+                MaxDownLoadThreadCount = 10
             })
-           .UseMemoryCache()
-           //.UseRedisCache()
-           .UseElasticSearchStore()
-           //.UseMongoDBStore()
+           .UseMemoryQueue()
+           //.UseRedisQueue()
+           //.UseElasticSearchStore()
+           .UseMongoDBStore()
            .Start();
+
+            Console.ReadKey();
         }
     }
 }

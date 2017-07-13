@@ -19,23 +19,13 @@ namespace Spider
 
         public int MaxSpiderThreadCount { get; set; }
 
-        public SpiderSetting(int localPort = 6881, bool isSaveTorrent = false, string torrentSavePath = "", int maxDownLoadThreadCount = 20, int maxSpiderThreadCount = 2)
+        public SpiderSetting(int localPort = 6881, bool isSaveTorrent = false, string torrentSavePath = "", int maxDownLoadThreadCount = 10, int maxSpiderThreadCount = 2)
         {
             LocalPort = localPort;
             IsSaveTorrent = isSaveTorrent;
             TorrentSavePath = torrentSavePath;
             MaxDownLoadThreadCount = maxDownLoadThreadCount;
             MaxSpiderThreadCount = maxSpiderThreadCount;
-
-
-            if (IsSaveTorrent)
-            {
-                if (string.IsNullOrEmpty(TorrentSavePath) || !Directory.Exists(TorrentSavePath))
-                {
-                    TorrentSavePath = Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "torrent");
-                    Directory.CreateDirectory(TorrentSavePath);
-                }
-            }
         }
     }
 }

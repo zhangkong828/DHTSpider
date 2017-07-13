@@ -41,15 +41,10 @@ namespace Spider.Log
         }
 
 
-        public static void Success(string msg)
-        {
-            Console.ForegroundColor = ConsoleColor.Green;
-            ConsoleWrite(msg);
-        }
-
 
         public static void ConsoleWrite(string msg)
         {
+            Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("------------------------------------------------------");
             Console.WriteLine($"[{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}]{msg}");
         }
