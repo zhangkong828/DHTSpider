@@ -114,7 +114,7 @@ namespace Spider
                     spider.NewMetadata += DHTSpider_NewMetadata;
                     spider.Start();
                 });
-                Thread.Sleep(1000 * 2);
+                Thread.Sleep(1000);
             }
 
             for (var i = 0; i < _option.MaxDownLoadThreadCount; i++)
@@ -125,7 +125,7 @@ namespace Spider
                 {
                     Download(id);
                 });
-                Thread.Sleep(1000);
+                Thread.Sleep(500);
             }
 
 
@@ -182,6 +182,10 @@ namespace Spider
                 catch (Exception ex)
                 {
                     Logger.Error($"Download {ex.Message}");
+                }
+                finally
+                {
+                    Thread.Sleep(100);
                 }
             }
         }

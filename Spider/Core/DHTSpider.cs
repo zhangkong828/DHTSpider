@@ -1,4 +1,5 @@
-﻿using Spider.Log;
+﻿using Spider.Core.UdpServer;
+using Spider.Log;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -27,10 +28,10 @@ namespace Spider.Core
         {
 
             LocalId = NodeId.Create();
-            listener = new DhtListener(localAddress);
+            //listener = new DhtListener(localAddress);
+            udp = new UDPService(localAddress);
             KTable = new HashSet<Node>();
             TokenManager = new EasyTokenManager();
-            Queue = new Queue<KeyValuePair<InfoHash, IPEndPoint>>();
         }
         private object locker = new object();
         public IMetaDataFilter Filter { get; set; }
@@ -41,7 +42,6 @@ namespace Spider.Core
 
         public HashSet<Node> KTable { get; set; }
 
-        public Queue<KeyValuePair<InfoHash, IPEndPoint>> Queue { get; set; }
         private bool disposed = false;
         public bool Disposed
         {
@@ -68,13 +68,14 @@ namespace Spider.Core
 
         public void Add(Node node)
         {
+            Logger.Fatal($"Add1  {KTable.Count} {node.Id} {node.Token} {node.EndPoint}");
             lock (locker)
             {
                 if (!KTable.Contains(node))
                 {
                     lock (locker)
                     {
-                        Logger.Fatal($"Add  {KTable.Count} {node.Id} {node.Token} {node.EndPoint}");
+                        Logger.Fatal($"Add2  {KTable.Count} {node.Id} {node.Token} {node.EndPoint}");
                         KTable.Add(node);
                     }
                 }
@@ -94,7 +95,6 @@ namespace Spider.Core
                 if (Filter == null || (Filter != null && Filter.Ignore(infohash)))
                 {
                     NewMetadata?.Invoke(this, new NewMetadataEventArgs(infohash, endpoint));
-                    Queue.Enqueue(new KeyValuePair<InfoHash, IPEndPoint>(infohash, endpoint));
                 }
             }
             catch (Exception)
@@ -143,13 +143,16 @@ namespace Spider.Core
         public void Send(DhtMessage msg, IPEndPoint endpoint)
         {
             var buffer = msg.Encode();
-            listener.Send(buffer, endpoint);
+            //listener.Send(buffer, endpoint);
+            udp.Send(endpoint, buffer);
         }
 
         public void Start()
         {
-            listener.Start();
-            listener.MessageReceived += OnMessageReceived;
+            //listener.Start();
+            //listener.MessageReceived += OnMessageReceived;
+            udp.Start();
+            udp.MessageReceived += OnMessageReceived;
 
             Task.Run(() =>
             {
@@ -168,7 +171,7 @@ namespace Spider.Core
         }
         public void Stop()
         {
-            listener.Stop();
+            //listener.Stop();
         }
 
         private void JoinDHTNetwork()
@@ -211,7 +214,7 @@ namespace Spider.Core
         }
 
         private DhtListener listener;
-
+        private UDPService udp;
 
         private void OnMessageReceived(byte[] buffer, IPEndPoint endpoint)
         {

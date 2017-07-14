@@ -61,9 +61,10 @@ namespace Tancoder.Torrent
                 OnMessageReceived(buffer, e);
                 client.BeginReceive(EndReceive, null);
             }
-            catch (ObjectDisposedException)
+            catch (ObjectDisposedException ex)
             {
                 // Ignore, we're finished!
+                throw new Exception($"UdpListener ObjectDisposedException: {ex}");
             }
             catch (SocketException ex)
             {
@@ -79,16 +80,25 @@ namespace Tancoder.Torrent
                             client.BeginReceive(EndReceive, null);
                             return;
                         }
-                        catch (ObjectDisposedException)
+                        catch (ObjectDisposedException oe)
                         {
-                            return;
+                            throw new Exception($"UdpListener ObjectDisposedException: {oe}");
                         }
                         catch (SocketException e)
                         {
+                            throw new Exception($"UdpListener SocketException: {e}");
                             if (e.ErrorCode != 10054)
                                 return;
                         }
                     }
+                }
+                else if (ex.ErrorCode == 10052)
+                {
+
+                }
+                else
+                {
+                    throw new Exception($"UdpListener SocketException: {ex}");
                 }
             }
         }
@@ -104,7 +114,7 @@ namespace Tancoder.Torrent
             }
             catch (Exception ex)
             {
-                Debug.WriteLine("UdpListener could not send message: {0}", ex);
+                throw new Exception($"UdpListener could not send message: {ex}");
             }
         }
 

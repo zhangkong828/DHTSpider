@@ -48,6 +48,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Core\UdpServer\BufferManager.cs" />
+    <Compile Include="Core\UdpServer\SocketAsyncEventArgsPool.cs" />
+    <Compile Include="Core\UdpServer\UDPService.cs" />
     <Compile Include="Queue\IQueue.cs" />
     <Compile Include="Core\DHTSpider.cs" />
     <Compile Include="Core\EasyTokenManager.cs" />
@@ -68,5 +71,6 @@
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
