@@ -17,13 +17,14 @@ namespace SimpleClient
                 IsSaveTorrent = true,
                 TorrentSavePath = "",
                 MaxSpiderThreadCount = 2,
-                MaxDownLoadThreadCount = 10
+                MaxDownLoadThreadCount = 20
             })
-           .UseMemoryQueue()
-           //.UseRedisQueue()
-           //.UseElasticSearchStore()
-           .UseMongoDBStore()
-           .Start();
+            .UseDefaultCache()
+            .UseDefaultQueue()
+            //.UseRedisQueue()
+            //.UseElasticSearchStore()
+            .UseMongoDBStore()
+            .Start();
 
             Console.ReadKey();
         }

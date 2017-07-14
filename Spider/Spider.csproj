@@ -48,6 +48,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Cache\ICache.cs" />
+    <Compile Include="Cache\MemoryCache.cs" />
+    <Compile Include="Cache\RedisCache.cs" />
     <Compile Include="Core\UdpServer\BufferManager.cs" />
     <Compile Include="Core\UdpServer\SocketAsyncEventArgsPool.cs" />
     <Compile Include="Core\UdpServer\UDPService.cs" />

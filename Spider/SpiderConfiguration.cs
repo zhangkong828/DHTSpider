@@ -1,4 +1,5 @@
 ﻿using Autofac;
+using Spider.Cache;
 using Spider.Core;
 using Spider.Log;
 using Spider.Queue;
@@ -25,6 +26,7 @@ namespace Spider
         private static SpiderConfiguration _instance = null;
 
         public SpiderSetting _option { get; set; }
+        public ICache _cache { get; set; }
         public IQueue _queue { get; set; }
 
         private SpiderConfiguration(SpiderSetting option)
@@ -56,8 +58,19 @@ namespace Spider
             }
             return _instance;
         }
+        public SpiderConfiguration UseDefaultCache()
+        {
+            _builder.RegisterType<MemoryCache>().As<ICache>().Named<ICache>("Cache").SingleInstance();
+            return _instance;
+        }
 
-        public SpiderConfiguration UseMemoryQueue()
+        public SpiderConfiguration UseRedisCache()
+        {
+            _builder.RegisterType<RedisCache>().As<ICache>().Named<ICache>("Cache").SingleInstance();
+            return _instance;
+        }
+
+        public SpiderConfiguration UseDefaultQueue()
         {
             _builder.RegisterType<MemoryQueue>().As<IQueue>().Named<IQueue>("Queue").SingleInstance();
             return _instance;
@@ -87,12 +100,17 @@ namespace Spider
         public SpiderConfiguration Start()
         {
             _container = _builder.Build();
+            if (!_container.IsRegisteredWithName<ICache>("Cache"))
+            {
+                throw new Exception("没有注册Cache");
+            }
             if (!_container.IsRegisteredWithName<IQueue>("Queue"))
             {
                 throw new Exception("没有注册Queue");
             }
 
             _queue = _container.ResolveNamed<IQueue>("Queue");
+            _cache = _container.ResolveNamed<ICache>("Cache");
 
             Task.Run(() =>
             {
@@ -107,10 +125,10 @@ namespace Spider
             for (var i = 0; i < _option.MaxSpiderThreadCount; i++)
             {
                 var port = _option.LocalPort + i;
-                Logger.ConsoleWrite($"抓取线程：{i + 1} 端口：{port} 已启动...");
+                Logger.ConsoleWrite($"线程：{i + 1} 端口：{port} 已启动监听...");
                 Task.Run(() =>
                 {
-                    var spider = new DHTSpider(new IPEndPoint(IPAddress.Any, port));
+                    var spider = new DHTSpider(new IPEndPoint(IPAddress.Any, port), _queue);
                     spider.NewMetadata += DHTSpider_NewMetadata;
                     spider.Start();
                 });
@@ -120,7 +138,7 @@ namespace Spider
             for (var i = 0; i < _option.MaxDownLoadThreadCount; i++)
             {
                 var id = i + 1;
-                Logger.ConsoleWrite($"线程[{id}]已启动下载");
+                Logger.ConsoleWrite($"线程[{id}]开始下载");
                 Task.Run(() =>
                 {
                     Download(id);
@@ -136,10 +154,15 @@ namespace Spider
 
         private void DHTSpider_NewMetadata(object sender, NewMetadataEventArgs e)
         {
-            _queue.Enqueue(new KeyValuePair<InfoHash, IPEndPoint>(e.Metadata, e.Owner));
-
-            Console.ForegroundColor = ConsoleColor.Green;
-            Logger.ConsoleWrite($"NewMetadata    Hash:{e.Metadata} Address:{e.Owner.ToString()}");
+            var hash = e.Metadata.ToString();
+            lock (obj)
+            {
+                if (!_cache.ContainsKey(hash))
+                {
+                    _queue.Enqueue(new KeyValuePair<InfoHash, IPEndPoint>(e.Metadata, e.Owner));
+                    Logger.ConsoleWrite($"NewMetadata    Hash:{e.Metadata}  Address:{e.Owner.ToString()}");
+                }
+            }
 
         }
 
@@ -174,7 +197,7 @@ namespace Spider
                             //}
                             //var str = string.Join("&", list);
                             //Logger.Warn($"{hash} {name} {str}");
-                            Logger.ConsoleWrite($"线程[{threadId}]下载完成    Hash:{hash}    Name:{name} ");
+                            Logger.ConsoleWrite($"线程[{threadId}]下载完成   Name:{name} ");
                         }
                     }
 
@@ -185,7 +208,7 @@ namespace Spider
                 }
                 finally
                 {
-                    Thread.Sleep(100);
+                    Thread.Sleep(1000);
                 }
             }
         }

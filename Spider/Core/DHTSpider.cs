@@ -1,5 +1,6 @@
 ﻿using Spider.Core.UdpServer;
 using Spider.Log;
+using Spider.Queue;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -24,17 +25,17 @@ namespace Spider.Core
             new IPEndPoint(Dns.GetHostEntry("dht.transmissionbt.com").AddressList[0], 6881)
         };
 
-        public DHTSpider(IPEndPoint localAddress)
+        public DHTSpider(IPEndPoint localAddress, IQueue queue)
         {
-
             LocalId = NodeId.Create();
-            //listener = new DhtListener(localAddress);
             udp = new UDPService(localAddress);
             KTable = new HashSet<Node>();
             TokenManager = new EasyTokenManager();
+            Queue = queue;
         }
         private object locker = new object();
         public IMetaDataFilter Filter { get; set; }
+        public IQueue Queue { get; set; }
 
         public NodeId LocalId { get; set; }
 
@@ -143,14 +144,11 @@ namespace Spider.Core
         public void Send(DhtMessage msg, IPEndPoint endpoint)
         {
             var buffer = msg.Encode();
-            //listener.Send(buffer, endpoint);
             udp.Send(endpoint, buffer);
         }
 
         public void Start()
         {
-            //listener.Start();
-            //listener.MessageReceived += OnMessageReceived;
             udp.Start();
             udp.MessageReceived += OnMessageReceived;
 
@@ -158,7 +156,7 @@ namespace Spider.Core
             {
                 while (true)
                 {
-                    if (true)//Todo
+                    if (Queue.Count() == 0)
                     {
                         JoinDHTNetwork();
                         MakeNeighbours();
@@ -171,7 +169,6 @@ namespace Spider.Core
         }
         public void Stop()
         {
-            //listener.Stop();
         }
 
         private void JoinDHTNetwork()
@@ -212,8 +209,7 @@ namespace Spider.Core
                 //Logger.Fatal("SendFindNodeRequest Exception" + ex.Message + ex.StackTrace);
             }
         }
-
-        private DhtListener listener;
+        
         private UDPService udp;
 
         private void OnMessageReceived(byte[] buffer, IPEndPoint endpoint)
