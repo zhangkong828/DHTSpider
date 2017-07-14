@@ -17,7 +17,7 @@ namespace SimpleClient
                 IsSaveTorrent = true,
                 TorrentSavePath = "",
                 MaxSpiderThreadCount = 2,
-                MaxDownLoadThreadCount = 20
+                MaxDownLoadThreadCount = 10
             })
             .UseDefaultCache()
             .UseDefaultQueue()
