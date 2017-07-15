@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Spider.Helper;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,7 +11,6 @@ namespace Spider.Cache
     {
         public RedisCache()
         {
-
         }
 
         public bool ContainsKey(string key)

@@ -58,6 +58,7 @@ namespace Spider
             }
             return _instance;
         }
+
         public SpiderConfiguration UseDefaultCache()
         {
             _builder.RegisterType<MemoryCache>().As<ICache>().Named<ICache>("Cache").SingleInstance();
@@ -89,12 +90,13 @@ namespace Spider
 
         public SpiderConfiguration UseMongoDBStore()
         {
+            //TODO
             return _instance;
         }
 
         public void Stop()
         {
-
+            //TODO
         }
 
         public SpiderConfiguration Start()
@@ -117,7 +119,6 @@ namespace Spider
                 while (true)
                 {
                     Thread.Sleep(1000 * 60);
-                    Logger.ConsoleWrite($"QueueCount:{_queue.Count()}");
                     Logger.Info($"QueueCount:{_queue.Count()}");
                 }
             });
@@ -159,6 +160,7 @@ namespace Spider
             {
                 if (!_cache.ContainsKey(hash))
                 {
+                    _cache.Set(hash, e.Owner);
                     _queue.Enqueue(new KeyValuePair<InfoHash, IPEndPoint>(e.Metadata, e.Owner));
                     Logger.ConsoleWrite($"NewMetadata    Hash:{e.Metadata}  Address:{e.Owner.ToString()}");
                 }

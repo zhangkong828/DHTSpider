@@ -237,7 +237,7 @@ namespace Spider.Core
             }
             catch (Exception ex)
             {
-                Logger.Error("OnMessageReceived " + ex.Message + ex.StackTrace);
+                //Logger.Error("OnMessageReceived " + ex.Message + ex.StackTrace);
             }
 
         }

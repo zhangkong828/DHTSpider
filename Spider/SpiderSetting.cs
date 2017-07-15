@@ -27,5 +27,7 @@ namespace Spider
             MaxDownLoadThreadCount = maxDownLoadThreadCount;
             MaxSpiderThreadCount = maxSpiderThreadCount;
         }
+        
+
     }
 }

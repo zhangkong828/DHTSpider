@@ -39,8 +39,13 @@
     <Reference Include="NLog, Version=4.0.0.0, Culture=neutral, PublicKeyToken=5120e14c03d0593c, processorArchitecture=MSIL">
       <HintPath>..\packages\NLog.4.4.11\lib\net45\NLog.dll</HintPath>
     </Reference>
+    <Reference Include="StackExchange.Redis, Version=1.2.4.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\StackExchange.Redis.1.2.4\lib\net45\StackExchange.Redis.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
+    <Reference Include="System.configuration" />
     <Reference Include="System.Core" />
+    <Reference Include="System.IO.Compression" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -54,6 +59,7 @@
     <Compile Include="Core\UdpServer\BufferManager.cs" />
     <Compile Include="Core\UdpServer\SocketAsyncEventArgsPool.cs" />
     <Compile Include="Core\UdpServer\UDPService.cs" />
+    <Compile Include="Helper\RedisHelper.cs" />
     <Compile Include="Queue\IQueue.cs" />
     <Compile Include="Core\DHTSpider.cs" />
     <Compile Include="Core\EasyTokenManager.cs" />

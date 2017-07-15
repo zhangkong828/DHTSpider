@@ -16,7 +16,7 @@ namespace SimpleClient
                 LocalPort = 6881,
                 IsSaveTorrent = true,
                 TorrentSavePath = "",
-                MaxSpiderThreadCount = 2,
+                MaxSpiderThreadCount = 1,
                 MaxDownLoadThreadCount = 10
             })
             .UseDefaultCache()
