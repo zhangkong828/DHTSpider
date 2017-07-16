@@ -1148,8 +1148,7 @@ namespace Spider.Helper
         /// <param name="e"></param>
         private static void ConnMultiplexer_HashSlotMoved(object sender, HashSlotMovedEventArgs e)
         {
-            //Console.WriteLine(
-            $"{nameof(ConnMultiplexer_HashSlotMoved)}: {nameof(e.OldEndPoint)}-{e.OldEndPoint} To {nameof(e.NewEndPoint)}-{e.NewEndPoint}, ");
+            //Console.WriteLine($"{nameof(ConnMultiplexer_HashSlotMoved)}: {nameof(e.OldEndPoint)}-{e.OldEndPoint} To {nameof(e.NewEndPoint)}-{e.NewEndPoint}, ");
         }
 
         /// <summary>

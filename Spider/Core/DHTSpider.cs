@@ -156,7 +156,7 @@ namespace Spider.Core
             {
                 while (true)
                 {
-                    if (Queue.Count() == 0)
+                    if (true)
                     {
                         JoinDHTNetwork();
                         MakeNeighbours();
@@ -209,7 +209,7 @@ namespace Spider.Core
                 //Logger.Fatal("SendFindNodeRequest Exception" + ex.Message + ex.StackTrace);
             }
         }
-        
+
         private UDPService udp;
 
         private void OnMessageReceived(byte[] buffer, IPEndPoint endpoint)

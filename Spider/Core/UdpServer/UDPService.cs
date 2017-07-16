@@ -99,7 +99,6 @@ namespace Spider.Core.UdpServer
                 {
                     System.Threading.WaitHandle.WaitAll(reset);
                     reset[0].Set();
-
                     if (SocketAsynPool.Count > 0)
                     {
                         SocketAsyncEventArgs sockasyn = SocketAsynPool.Pop();
@@ -117,7 +116,7 @@ namespace Spider.Core.UdpServer
                     {
                         reset[0].Reset();
                     }
-
+                    Thread.Sleep(100);
                 }
             }));
 
