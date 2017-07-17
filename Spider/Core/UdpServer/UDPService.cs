@@ -116,7 +116,6 @@ namespace Spider.Core.UdpServer
                     {
                         reset[0].Reset();
                     }
-                    Thread.Sleep(100);
                 }
             }));
 

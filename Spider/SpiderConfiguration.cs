@@ -126,7 +126,7 @@ namespace Spider
             for (var i = 0; i < _option.MaxSpiderThreadCount; i++)
             {
                 var port = _option.LocalPort + i;
-                Logger.ConsoleWrite($"线程：{i + 1} 端口：{port} 已启动监听...");
+                //Logger.ConsoleWrite($"线程：{i + 1} 端口：{port} 已启动监听...");
                 Task.Run(() =>
                 {
                     var spider = new DHTSpider(new IPEndPoint(IPAddress.Any, port), _queue);
@@ -136,16 +136,16 @@ namespace Spider
                 Thread.Sleep(1000);
             }
 
-            for (var i = 0; i < _option.MaxDownLoadThreadCount; i++)
-            {
-                var id = i + 1;
-                Logger.ConsoleWrite($"线程[{id}]开始下载");
-                Task.Run(() =>
-                {
-                    Download(id);
-                });
-                Thread.Sleep(500);
-            }
+            //for (var i = 0; i < _option.MaxDownLoadThreadCount; i++)
+            //{
+            //    var id = i + 1;
+            //    Logger.ConsoleWrite($"线程[{id}]开始下载");
+            //    Task.Run(() =>
+            //    {
+            //        Download(id);
+            //    });
+            //    Thread.Sleep(500);
+            //}
 
 
             return _instance;
