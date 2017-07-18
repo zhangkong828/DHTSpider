@@ -1,4 +1,5 @@
-﻿using Spider.Core.UdpServer;
+﻿using Spider.Core.IoSocket;
+using Spider.Core.UdpServer;
 using Spider.Log;
 using Spider.Queue;
 using System;
@@ -28,7 +29,8 @@ namespace Spider.Core
         public DHTSpider(IPEndPoint localAddress, IQueue queue)
         {
             LocalId = NodeId.Create();
-            udp = new UDPService(localAddress);
+            //udp = new UDPService(localAddress);
+            ioServer = new IoServer(localAddress);
             KTable = new HashSet<Node>();
             TokenManager = new EasyTokenManager();
             Queue = queue;
@@ -144,13 +146,17 @@ namespace Spider.Core
         public void Send(DhtMessage msg, IPEndPoint endpoint)
         {
             var buffer = msg.Encode();
-            udp.Send(endpoint, buffer);
+            //udp.Send(endpoint, buffer);
+            ioServer.Send(endpoint, buffer);
         }
 
         public void Start()
         {
-            udp.Start();
-            udp.MessageReceived += OnMessageReceived;
+            //udp.Start();
+            //udp.MessageReceived += OnMessageReceived;
+
+            ioServer.Start();
+            ioServer.MessageReceived += OnMessageReceived;
 
             Task.Run(() =>
             {
@@ -199,18 +205,19 @@ namespace Spider.Core
             }
             catch (Exception ex)
             {
-                var list = new List<string>();
-                foreach (var item in msg.Parameters)
-                {
-                    list.Add($"[key]={item.Key}[val]={item.Value}");
-                }
-                var str = string.Join("&", list);
+                //var list = new List<string>();
+                //foreach (var item in msg.Parameters)
+                //{
+                //    list.Add($"[key]={item.Key}[val]={item.Value}");
+                //}
+                //var str = string.Join("&", list);
                 //Logger.Fatal($"SendFindNodeRequest Error nodeid={nodeid == null} {nid} {msg.MessageType} {str}");
                 //Logger.Fatal("SendFindNodeRequest Exception" + ex.Message + ex.StackTrace);
             }
         }
 
         private UDPService udp;
+        private IoServer ioServer;
 
         private void OnMessageReceived(byte[] buffer, IPEndPoint endpoint)
         {
