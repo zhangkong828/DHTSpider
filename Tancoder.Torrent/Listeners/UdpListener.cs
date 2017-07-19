@@ -61,45 +61,49 @@ namespace Tancoder.Torrent
                 OnMessageReceived(buffer, e);
                 client.BeginReceive(EndReceive, null);
             }
-            catch (ObjectDisposedException ex)
-            {
-                // Ignore, we're finished!
-                throw new Exception($"UdpListener ObjectDisposedException: {ex}");
-            }
-            catch (SocketException ex)
-            {
-                // If the destination computer closes the connection
-                // we get error code 10054. We need to keep receiving on
-                // the socket until we clear all the error states
-                if (ex.ErrorCode == 10054)
-                {
-                    while (true)
-                    {
-                        try
-                        {
-                            client.BeginReceive(EndReceive, null);
-                            return;
-                        }
-                        catch (ObjectDisposedException oe)
-                        {
-                            throw new Exception($"UdpListener ObjectDisposedException: {oe}");
-                        }
-                        catch (SocketException e)
-                        {
-                            throw new Exception($"UdpListener SocketException: {e}");
-                            if (e.ErrorCode != 10054)
-                                return;
-                        }
-                    }
-                }
-                else if (ex.ErrorCode == 10052)
-                {
+            //catch (ObjectDisposedException ex)
+            //{
+            //    // Ignore, we're finished!
+            //    throw new Exception($"UdpListener ObjectDisposedException: {ex}");
+            //}
+            //catch (SocketException ex)
+            //{
+            //    // If the destination computer closes the connection
+            //    // we get error code 10054. We need to keep receiving on
+            //    // the socket until we clear all the error states
+            //    if (ex.ErrorCode == 10054)
+            //    {
+            //        while (true)
+            //        {
+            //            try
+            //            {
+            //                client.BeginReceive(EndReceive, null);
+            //                return;
+            //            }
+            //            catch (ObjectDisposedException oe)
+            //            {
+            //                throw new Exception($"UdpListener ObjectDisposedException: {oe}");
+            //            }
+            //            catch (SocketException e)
+            //            {
+            //                throw new Exception($"UdpListener SocketException: {e}");
+            //                //if (e.ErrorCode != 10054)
+            //                //    return;
+            //            }
+            //        }
+            //    }
+            //    else if (ex.ErrorCode == 10052)
+            //    {
 
-                }
-                else
-                {
-                    throw new Exception($"UdpListener SocketException: {ex}");
-                }
+            //    }
+            //    else
+            //    {
+            //        throw new Exception($"UdpListener SocketException: {ex}");
+            //    }
+            //}
+            catch (Exception ex)
+            {
+                throw new Exception($"UdpListener Exception: {ex}");
             }
         }
 
@@ -123,6 +127,12 @@ namespace Tancoder.Torrent
             try
             {
                 client = new UdpClient(Endpoint);
+                {
+                    const uint IOC_IN = 0x80000000;
+                    int IOC_VENDOR = 0x18000000;
+                    int SIO_UDP_CONNRESET = (int)(IOC_IN | IOC_VENDOR | 12);
+                    client.Client.IOControl((int)SIO_UDP_CONNRESET, new byte[] { Convert.ToByte(false) }, new byte[4]);
+                }
                 client.BeginReceive(EndReceive, null);
                 RaiseStatusChanged(ListenerStatus.Listening);
             }

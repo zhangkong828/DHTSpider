@@ -29,8 +29,8 @@ namespace Spider.Core
         public DHTSpider(IPEndPoint localAddress, IQueue queue)
         {
             LocalId = NodeId.Create();
-            //udp = new UDPService(localAddress);
-            ioServer = new IoServer(localAddress);
+            udp = new DhtListener(localAddress);
+            //ioServer = new IoServer(localAddress);
             KTable = new HashSet<Node>();
             TokenManager = new EasyTokenManager();
             Queue = queue;
@@ -146,17 +146,18 @@ namespace Spider.Core
         public void Send(DhtMessage msg, IPEndPoint endpoint)
         {
             var buffer = msg.Encode();
-            //udp.Send(endpoint, buffer);
-            ioServer.Send(endpoint, buffer);
+
+            udp.Send(buffer, endpoint);
+            //ioServer.Send(endpoint, buffer);
         }
 
         public void Start()
         {
-            //udp.Start();
-            //udp.MessageReceived += OnMessageReceived;
+            udp.Start();
+            udp.MessageReceived += OnMessageReceived;
 
-            ioServer.Start();
-            ioServer.MessageReceived += OnMessageReceived;
+            //ioServer.Start();
+            //ioServer.MessageReceived += OnMessageReceived;
 
             Task.Run(() =>
             {
@@ -216,8 +217,8 @@ namespace Spider.Core
             }
         }
 
-        private UDPService udp;
-        private IoServer ioServer;
+        private DhtListener udp;
+        //private IoServer ioServer;
 
         private void OnMessageReceived(byte[] buffer, IPEndPoint endpoint)
         {
