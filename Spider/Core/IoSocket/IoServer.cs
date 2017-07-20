@@ -82,18 +82,14 @@ namespace Spider.Core.IoSocket
         /// <param name="e">与发送或接收完成操作相关联的SocketAsyncEventArg对象</param>
         private void OnIOCompleted(object sender, SocketAsyncEventArgs e)
         {
-            // Determine which type of operation just completed and call the associated handler.
             switch (e.LastOperation)
             {
+                case SocketAsyncOperation.ReceiveFrom:
                 case SocketAsyncOperation.Receive:
                     this.ProcessReceive(e);
                     break;
-                case SocketAsyncOperation.Send:
-                    this.ProcessSend(e);
-                    break;
-                default:
-                    throw new ArgumentException("The last operation completed on the socket was not a receive or send");
             }
+            ioContextPool.Add(e);
         }
 
         public event MessageReceived MessageReceived;
@@ -120,16 +116,6 @@ namespace Spider.Core.IoSocket
 
                         MessageReceived?.Invoke(ByteArray, (IPEndPoint)e.RemoteEndPoint);
 
-                        ////设置发送的数据（原样返回）
-                        //Array.Copy(e.Buffer, 0, e.Buffer, e.BytesTransferred, e.BytesTransferred);
-                        //e.SetBuffer(e.Offset, e.BytesTransferred);
-
-
-                        //if (!s.SendAsync(e))        //投递发送请求，这个函数有可能同步发送出去，这时返回false，并且不会引发SocketAsyncEventArgs.Completed事件
-                        //{
-                        //    // 同步发送时处理发送完成事件
-                        //    this.ProcessSend(e);
-                        //}
                     }
                     else if (!s.ReceiveAsync(e))    //为接收下一段数据，投递接收请求，这个函数有可能同步完成，这时返回false，并且不会引发SocketAsyncEventArgs.Completed事件
                     {
@@ -148,29 +134,7 @@ namespace Spider.Core.IoSocket
             }
         }
 
-        /// <summary>
-        /// 发送完成时处理函数
-        /// </summary>
-        /// <param name="e">与发送完成操作相关联的SocketAsyncEventArg对象</param>
-        private void ProcessSend(SocketAsyncEventArgs e)
-        {
-            if (e.SocketError == SocketError.Success)
-            {
-                Socket s = (Socket)e.UserToken;
 
-                //接收时根据接收的字节数收缩了缓冲区的大小，因此投递接收请求时，恢复缓冲区大小
-                e.SetBuffer(0, bufferSize);
-                if (!s.ReceiveAsync(e))     //投递接收请求
-                {
-                    // 同步接收时处理接收完成事件
-                    this.ProcessReceive(e);
-                }
-            }
-            else
-            {
-                this.ProcessError(e);
-            }
-        }
 
         /// <summary>
         /// 处理socket错误
@@ -185,7 +149,7 @@ namespace Spider.Core.IoSocket
 
             string outStr = String.Format("套接字错误 {0}, IP {1}, 操作 {2}。", (Int32)e.SocketError, localEp, e.LastOperation);
 
-            Logger.Error(outStr);
+            Logger.Fatal(outStr);
         }
 
         /// <summary>
@@ -205,7 +169,7 @@ namespace Spider.Core.IoSocket
             // SocketAsyncEventArg 对象被释放，压入可重用队列。
             this.ioContextPool.Push(e);
             string outStr = String.Format("客户 {0} 断开, 共有 {1} 个连接。", s.RemoteEndPoint.ToString(), this.numConnectedSockets);
-            Logger.Error(outStr);
+            Logger.Fatal(outStr);
             try
             {
                 s.Shutdown(SocketShutdown.Send);
@@ -217,91 +181,6 @@ namespace Spider.Core.IoSocket
             finally
             {
                 s.Close();
-                s.Dispose();
-            }
-        }
-
-        /// <summary>
-        /// accept 操作完成时回调函数
-        /// </summary>
-        /// <param name="sender">Object who raised the event.</param>
-        /// <param name="e">SocketAsyncEventArg associated with the completed accept operation.</param>
-        private void OnAcceptCompleted(object sender, SocketAsyncEventArgs e)
-        {
-            this.ProcessAccept(e);
-        }
-
-        /// <summary>
-        /// 监听Socket接受处理
-        /// </summary>
-        /// <param name="e">SocketAsyncEventArg associated with the completed accept operation.</param>
-        private void ProcessAccept(SocketAsyncEventArgs e)
-        {
-            Socket s = e.AcceptSocket;
-            if (s.Connected)
-            {
-                try
-                {
-                    SocketAsyncEventArgs ioContext = this.ioContextPool.Pop();
-                    if (ioContext != null)
-                    {
-                        // 从接受的客户端连接中取数据配置ioContext
-
-                        ioContext.UserToken = s;
-
-                        Interlocked.Increment(ref this.numConnectedSockets);
-                        string outStr = String.Format("客户 {0} 连入, 共有 {1} 个连接。", s.RemoteEndPoint.ToString(), this.numConnectedSockets);
-                        Logger.Error(outStr);
-
-                        if (!s.ReceiveAsync(ioContext))
-                        {
-                            this.ProcessReceive(ioContext);
-                        }
-                    }
-                    else        //已经达到最大客户连接数量，在这接受连接，发送“连接已经达到最大数”，然后断开连接
-                    {
-                        //s.Send(Encoding.Default.GetBytes("连接已经达到最大数!"));
-                        string outStr = String.Format("连接已满，拒绝 {0} 的连接。", s.RemoteEndPoint);
-                        Logger.Error(outStr);
-                        s.Close();
-                    }
-                }
-                catch (SocketException ex)
-                {
-                    Socket token = e.UserToken as Socket;
-                    string outStr = String.Format("接收客户 {0} 数据出错, 异常信息： {1} 。", token.RemoteEndPoint, ex.ToString());
-                    Logger.Error(outStr);
-                }
-                catch (Exception ex)
-                {
-                    Logger.Error("异常：" + ex.ToString());
-                }
-                // 投递下一个接受请求
-                this.StartAccept(e);
-            }
-        }
-
-        /// <summary>
-        /// 从客户端开始接受一个连接操作
-        /// </summary>
-        /// <param name="acceptEventArg">The context object to use when issuing 
-        /// the accept operation on the server's listening socket.</param>
-        private void StartAccept(SocketAsyncEventArgs acceptEventArg)
-        {
-            if (acceptEventArg == null)
-            {
-                acceptEventArg = new SocketAsyncEventArgs();
-                acceptEventArg.Completed += new EventHandler<SocketAsyncEventArgs>(OnAcceptCompleted);
-            }
-            else
-            {
-                // 重用前进行对象清理
-                acceptEventArg.AcceptSocket = null;
-            }
-
-            if (!this.listenSocket.AcceptAsync(acceptEventArg))
-            {
-                this.ProcessAccept(acceptEventArg);
             }
         }
 
@@ -313,28 +192,40 @@ namespace Spider.Core.IoSocket
         {
             // 创建监听socket
             this.listenSocket = new Socket(endpoint.AddressFamily, SocketType.Dgram, ProtocolType.Udp);
-            this.listenSocket.ReceiveBufferSize = this.bufferSize;
-            this.listenSocket.SendBufferSize = this.bufferSize;
+            //this.listenSocket.ReceiveBufferSize = this.bufferSize;
+            //this.listenSocket.SendBufferSize = this.bufferSize;
 
-            if (endpoint.AddressFamily == AddressFamily.InterNetworkV6)
-            {
-                // 配置监听socket为 dual-mode (IPv4 & IPv6) 
-                // 27 is equivalent to IPV6_V6ONLY socket option in the winsock snippet below,
-                this.listenSocket.SetSocketOption(SocketOptionLevel.IPv6, (SocketOptionName)27, false);
-                this.listenSocket.Bind(new IPEndPoint(IPAddress.IPv6Any, endpoint.Port));
-            }
-            else
-            {
-                this.listenSocket.Bind(endpoint);
-            }
-
-
-            // 在监听Socket上投递一个接受请求。
-            this.StartAccept(null);
+            listenSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Broadcast, true);
+            listenSocket.DontFragment = true;
+            listenSocket.EnableBroadcast = true;
+            listenSocket.Bind(endpoint);
 
             // Blocks the current thread to receive incoming messages.
-            mutex.WaitOne();
+            //mutex.WaitOne();
+
+            Receive();
         }
+
+        private void Receive()
+        {
+            var ReceiveThread = new Thread(new ThreadStart(() =>
+            {
+                while (true)
+                {
+                    if (ioContextPool.Count > 0)
+                    {
+                        SocketAsyncEventArgs ioContext = this.ioContextPool.Pop();
+                        if (!listenSocket.ReceiveFromAsync(ioContext))
+                        {
+                            ProcessReceive(ioContext);
+                        }
+                    }
+                }
+            }));
+
+            ReceiveThread.Start();
+        }
+
 
         /// <summary>
         /// 停止服务
@@ -342,7 +233,7 @@ namespace Spider.Core.IoSocket
         internal void Stop()
         {
             this.listenSocket.Close();
-            mutex.ReleaseMutex();
+            //mutex.ReleaseMutex();
         }
 
 
@@ -360,6 +251,7 @@ namespace Spider.Core.IoSocket
                 if (sock != null)
                 {
                     sock.EndSend(result);
+                    Logger.Warn("SendCallBack");
                 }
             }
             catch

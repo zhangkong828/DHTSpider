@@ -66,44 +66,45 @@ namespace Tancoder.Torrent
             //    // Ignore, we're finished!
             //    throw new Exception($"UdpListener ObjectDisposedException: {ex}");
             //}
-            //catch (SocketException ex)
-            //{
-            //    // If the destination computer closes the connection
-            //    // we get error code 10054. We need to keep receiving on
-            //    // the socket until we clear all the error states
-            //    if (ex.ErrorCode == 10054)
-            //    {
-            //        while (true)
-            //        {
-            //            try
-            //            {
-            //                client.BeginReceive(EndReceive, null);
-            //                return;
-            //            }
-            //            catch (ObjectDisposedException oe)
-            //            {
-            //                throw new Exception($"UdpListener ObjectDisposedException: {oe}");
-            //            }
-            //            catch (SocketException e)
-            //            {
-            //                throw new Exception($"UdpListener SocketException: {e}");
-            //                //if (e.ErrorCode != 10054)
-            //                //    return;
-            //            }
-            //        }
-            //    }
-            //    else if (ex.ErrorCode == 10052)
-            //    {
+            catch (SocketException ex)
+            {
+                // If the destination computer closes the connection
+                // we get error code 10054. We need to keep receiving on
+                // the socket until we clear all the error states
+                //if (ex.ErrorCode == 10054)
+                //{
+                //    while (true)
+                //    {
+                //        try
+                //        {
+                //            client.BeginReceive(EndReceive, null);
+                //            return;
+                //        }
+                //        //catch (ObjectDisposedException oe)
+                //        //{
+                //        //    throw new Exception($"UdpListener ObjectDisposedException: {oe}");
+                //        //}
+                //        catch (SocketException e)
+                //        {
+                //            throw new Exception($"UdpListener SocketException: {e}");
+                //            //if (e.ErrorCode != 10054)
+                //            //    return;
+                //        }
+                //    }
+                //}
+                ////else if (ex.ErrorCode == 10052)
+                ////{
 
-            //    }
-            //    else
-            //    {
-            //        throw new Exception($"UdpListener SocketException: {ex}");
-            //    }
-            //}
+                ////}
+                //else
+                //{
+                //    throw new Exception($"UdpListener SocketException: {ex}");
+                //}
+                client.BeginReceive(EndReceive, null);
+            }
             catch (Exception ex)
             {
-                throw new Exception($"UdpListener Exception: {ex}");
+                throw new Exception($"UdpListener SocketException: {ex}");
             }
         }
 

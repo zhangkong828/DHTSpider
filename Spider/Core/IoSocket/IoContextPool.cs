@@ -40,7 +40,10 @@ namespace Spider.Core.IoSocket
             else
                 return false;
         }
-
+        internal Int32 Count
+        {
+            get { return this.pool.Count; }
+        }
         /// <summary>
         /// 取出集合中指定对象，内部使用
         /// </summary>

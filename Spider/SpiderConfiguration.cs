@@ -61,7 +61,7 @@ namespace Spider
 
         public SpiderConfiguration UseDefaultCache()
         {
-            _builder.RegisterType<MemoryCache>().As<ICache>().Named<ICache>("Cache").SingleInstance();
+            _builder.RegisterType<DefaultCache>().As<ICache>().Named<ICache>("Cache").SingleInstance();
             return _instance;
         }
 
