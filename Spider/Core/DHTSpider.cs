@@ -30,8 +30,8 @@ namespace Spider.Core
         {
             LocalId = NodeId.Create();
             //udp = new DhtListener(localAddress);
-            //ioServer = new IoServer(localAddress);
-            udpServer = new AsyncUDPServer(localAddress);
+            //udpServer = new AsyncUDPServer(localAddress);
+            udpSocketListener = new UdpSocketListener(localAddress);
             KTable = new HashSet<Node>();
             TokenManager = new EasyTokenManager();
             Queue = queue;
@@ -149,8 +149,8 @@ namespace Spider.Core
             var buffer = msg.Encode();
 
             //udp.Send(buffer, endpoint);
-            //ioServer.Send(endpoint, buffer);
-            udpServer.Send(buffer, endpoint);
+            // udpServer.Send(buffer, endpoint);
+            udpSocketListener.Send(buffer, endpoint);
         }
 
         public void Start()
@@ -158,11 +158,11 @@ namespace Spider.Core
             //udp.Start();
             //udp.MessageReceived += OnMessageReceived;
 
-            //ioServer.Start();
-            //ioServer.MessageReceived += OnMessageReceived;
+            //udpServer.Start();
+            //udpServer.MessageReceived += OnMessageReceived;
 
-            udpServer.Start();
-            udpServer.MessageReceived += OnMessageReceived;
+            udpSocketListener.Start();
+            udpSocketListener.MessageReceived += OnMessageReceived;
 
             Task.Run(() =>
             {
@@ -223,8 +223,8 @@ namespace Spider.Core
         }
 
         //private DhtListener udp;
-        //private IoServer ioServer;
-        private AsyncUDPServer udpServer;
+        //private AsyncUDPServer udpServer;
+        private UdpSocketListener udpSocketListener;
 
         private void OnMessageReceived(byte[] buffer, IPEndPoint endpoint)
         {

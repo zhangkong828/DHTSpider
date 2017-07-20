@@ -174,7 +174,11 @@ namespace Spider
             {
                 try
                 {
-                    var info = _queue.Dequeue();
+                    var info = new KeyValuePair<InfoHash, IPEndPoint>();
+                    lock (this)
+                    {
+                        info = _queue.Dequeue();
+                    }
                     if (info.Key == null || info.Value == null)
                     {
                         Thread.Sleep(1000);

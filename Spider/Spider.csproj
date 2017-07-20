@@ -60,6 +60,7 @@
     <Compile Include="Core\IoSocket\IoContextPool.cs" />
     <Compile Include="Core\IoSocket\IoServer.cs" />
     <Compile Include="Core\UdpServer\AsyncUDPServer.cs" />
+    <Compile Include="Core\UdpSocketListener.cs" />
     <Compile Include="Helper\RedisHelper.cs" />
     <Compile Include="Queue\IQueue.cs" />
     <Compile Include="Core\DHTSpider.cs" />

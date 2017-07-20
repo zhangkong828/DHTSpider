@@ -19,7 +19,7 @@ namespace Spider
 
         public int MaxSpiderThreadCount { get; set; }
 
-        public SpiderSetting(int localPort = 6881, bool isSaveTorrent = false, string torrentSavePath = "", int maxDownLoadThreadCount = 10, int maxSpiderThreadCount = 2)
+        public SpiderSetting(int localPort = 6881, bool isSaveTorrent = false, string torrentSavePath = "", int maxDownLoadThreadCount = 10, int maxSpiderThreadCount = 1)
         {
             LocalPort = localPort;
             IsSaveTorrent = isSaveTorrent;
