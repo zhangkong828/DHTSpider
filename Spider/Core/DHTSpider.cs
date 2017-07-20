@@ -35,7 +35,9 @@ namespace Spider.Core
             KTable = new HashSet<Node>();
             TokenManager = new EasyTokenManager();
             Queue = queue;
+            MessageQueue = new Queue<KeyValuePair<IPEndPoint, byte[]>>();
         }
+        public Queue<KeyValuePair<IPEndPoint, byte[]>> MessageQueue;
         private object locker = new object();
         public IMetaDataFilter Filter { get; set; }
         public IQueue Queue { get; set; }
@@ -170,13 +172,23 @@ namespace Spider.Core
                 {
                     if (Queue.Count() < 100)
                     {
+                        Logger.Info("JoinDHTNetwork MakeNeighbours");
                         JoinDHTNetwork();
                         MakeNeighbours();
                     }
-                    Thread.Sleep(1000);
+                    Thread.Sleep(3000);
                 }
 
             });
+
+            for (int i = 0; i < 10; i++)
+            {
+                Task.Run(() =>
+                {
+                    ProcessMessage();
+                });
+                Thread.Sleep(100);
+            }
 
         }
         public void Stop()
@@ -209,16 +221,8 @@ namespace Spider.Core
                 msg = new FindNode(nid, NodeId.Create());
                 Send(msg, address);
             }
-            catch (Exception ex)
+            catch
             {
-                //var list = new List<string>();
-                //foreach (var item in msg.Parameters)
-                //{
-                //    list.Add($"[key]={item.Key}[val]={item.Value}");
-                //}
-                //var str = string.Join("&", list);
-                //Logger.Fatal($"SendFindNodeRequest Error nodeid={nodeid == null} {nid} {msg.MessageType} {str}");
-                //Logger.Fatal("SendFindNodeRequest Exception" + ex.Message + ex.StackTrace);
             }
         }
 
@@ -228,35 +232,47 @@ namespace Spider.Core
 
         private void OnMessageReceived(byte[] buffer, IPEndPoint endpoint)
         {
+            //处理消息比较消耗cpu  通过队列来消费，防止cpu过高
+            MessageQueue.Enqueue(new KeyValuePair<IPEndPoint, byte[]>(endpoint, buffer));
+        }
+
+        private void ProcessMessage()
+        {
+            while (true)
+            {
+                if (MessageQueue.Count > 0)
+                {
+                    lock (locker)
+                    {
+                        if (MessageQueue.Count > 0)
+                        {
+                            var msg = MessageQueue.Dequeue();
+                            ProcessMessage(msg.Value, msg.Key);
+                        }
+                    }
+                }
+                else
+                {
+                    Thread.Sleep(1000);
+                }
+            }
+        }
+        private void ProcessMessage(byte[] buffer, IPEndPoint endpoint)
+        {
             try
             {
                 DhtMessage message;
                 string error;
                 if (MessageFactory.TryNoTraceDecodeMessage((BEncodedDictionary)BEncodedValue.Decode(buffer, 0, buffer.Length, false), out message, out error))
                 {
-                    if (message.MessageType.ToString() != "q")
-                    {
-                        //Logger.Info($"OnMessageReceived  {message.MessageType}");
-                    }
                     if (message is QueryMessage)
                     {
                         message.Handle(this, new Node(message.Id, endpoint));
                     }
                 }
-                else
-                {
-                    //Logger.Error("OnMessageReceived  错误的消息");
-                }
-
             }
-            catch (Exception ex)
-            {
-                //Logger.Error("OnMessageReceived " + ex.Message + ex.StackTrace);
-            }
-
+            catch { }
         }
-
-
 
 
     }

@@ -144,7 +144,7 @@ namespace Spider
                 {
                     Download(id);
                 });
-                Thread.Sleep(500);
+                Thread.Sleep(100);
             }
 
 
