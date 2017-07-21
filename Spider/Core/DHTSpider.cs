@@ -170,7 +170,7 @@ namespace Spider.Core
             {
                 while (true)
                 {
-                    if (Queue.Count() < 100)
+                    if (Queue.Count() <= 0)
                     {
                         Logger.Info("JoinDHTNetwork MakeNeighbours");
                         JoinDHTNetwork();

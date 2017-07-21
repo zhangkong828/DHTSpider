@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 namespace Spider.Core
 {
     public delegate void MessageReceived(byte[] buffer, IPEndPoint endpoint);
+
     public class UdpSocketListener
     {
         private IPEndPoint endpoint;
@@ -74,7 +75,9 @@ namespace Spider.Core
 
                 //The listen socket was closed
                 if (errorCode == 995 || errorCode == 10004 || errorCode == 10038)
-                    return;
+                    //return;
+                    Logger.Fatal($"The listen socket was closed  errorCode:{errorCode}");
+                Logger.Fatal($"errorCode:{errorCode}");
             }
 
             if (e.LastOperation == SocketAsyncOperation.ReceiveFrom)
@@ -100,6 +103,8 @@ namespace Spider.Core
                     OnError(exc);
                 }
             }
+            else
+                Logger.Fatal($"LastOperation:{e.LastOperation.ToString()}");
         }
 
 
