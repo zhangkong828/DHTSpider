@@ -232,9 +232,17 @@ namespace Spider.Core
 
         private void OnMessageReceived(byte[] buffer, IPEndPoint endpoint)
         {
-            lock (locker)
+            try
             {
-                MessageQueue.Enqueue(new KeyValuePair<IPEndPoint, byte[]>(endpoint, buffer));
+                lock (locker)
+                {
+                    MessageQueue.Enqueue(new KeyValuePair<IPEndPoint, byte[]>(endpoint, buffer));
+                }
+
+            }
+            catch (Exception ex)
+            {
+                Logger.Fatal($"OnMessageReceived :{ex.ToString()}");
             }
         }
 
@@ -242,21 +250,34 @@ namespace Spider.Core
         {
             while (true)
             {
-                if (MessageQueue.Count > 0)
+                try
                 {
-                    lock (locker)
+                    var msg = new KeyValuePair<IPEndPoint, byte[]>();
+                    if (MessageQueue.Count > 0)
                     {
-                        if (MessageQueue.Count > 0)
+                        lock (locker)
                         {
-                            var msg = MessageQueue.Dequeue();
-                            ProcessMessage(msg.Value, msg.Key);
+                            if (MessageQueue.Count > 0)
+                            {
+                                msg = MessageQueue.Dequeue();
+                            }
                         }
                     }
+                    if (msg.Key != null && msg.Value != null)
+                    {
+                        ProcessMessage(msg.Value, msg.Key);
+                    }
+                    else
+                    {
+                        Thread.Sleep(1000);
+                    }
                 }
-                else
+                catch { }
+                finally
                 {
-                    Thread.Sleep(1000);
+                    Thread.Sleep(100);
                 }
+
             }
         }
         private void ProcessMessage(byte[] buffer, IPEndPoint endpoint)
