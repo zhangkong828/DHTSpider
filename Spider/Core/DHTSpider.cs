@@ -232,8 +232,10 @@ namespace Spider.Core
 
         private void OnMessageReceived(byte[] buffer, IPEndPoint endpoint)
         {
-            //处理消息比较消耗cpu  通过队列来消费，防止cpu过高
-            MessageQueue.Enqueue(new KeyValuePair<IPEndPoint, byte[]>(endpoint, buffer));
+            lock (locker)
+            {
+                MessageQueue.Enqueue(new KeyValuePair<IPEndPoint, byte[]>(endpoint, buffer));
+            }
         }
 
         private void ProcessMessage()
