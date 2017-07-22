@@ -33,6 +33,7 @@ namespace Spider.Core
             try
             {
                 m_ListenSocket = new Socket(this.endpoint.AddressFamily, SocketType.Dgram, ProtocolType.Udp);
+                m_ListenSocket.Ttl = 255;
                 m_ListenSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
                 m_ListenSocket.Bind(this.endpoint);
 
@@ -87,6 +88,8 @@ namespace Spider.Core
                     //获取接收到的数据
                     byte[] ByteArray = new byte[e.BytesTransferred];
                     Array.Copy(e.Buffer, 0, ByteArray, 0, ByteArray.Length);
+                    //测试
+                    Logger.Debug($"buffer:{ByteArray.Length}   remote:{(IPEndPoint)e.RemoteEndPoint}");
                     MessageReceived?.Invoke(ByteArray, (IPEndPoint)e.RemoteEndPoint);
                 }
                 catch (Exception exc)
@@ -103,8 +106,6 @@ namespace Spider.Core
                     OnError(exc);
                 }
             }
-            else
-                Logger.Fatal($"LastOperation:{e.LastOperation.ToString()}");
         }
 
 
@@ -156,7 +157,11 @@ namespace Spider.Core
             try
             {
                 if (endpoint.Address != IPAddress.Any)
-                    m_ListenSocket.SendTo(buffer, endpoint);
+                {
+                    var lenght = m_ListenSocket.SendTo(buffer, endpoint);
+                    //测试
+                    Logger.Warn($"buffer:{lenght}   remote:{endpoint}");
+                }
             }
             catch (Exception ex)
             {

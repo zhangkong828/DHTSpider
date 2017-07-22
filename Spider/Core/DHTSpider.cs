@@ -3,6 +3,7 @@ using Spider.Core.UdpServer;
 using Spider.Log;
 using Spider.Queue;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -35,9 +36,9 @@ namespace Spider.Core
             KTable = new HashSet<Node>();
             TokenManager = new EasyTokenManager();
             Queue = queue;
-            MessageQueue = new Queue<KeyValuePair<IPEndPoint, byte[]>>();
+            MessageQueue = new ConcurrentQueue<KeyValuePair<IPEndPoint, byte[]>>();
         }
-        public Queue<KeyValuePair<IPEndPoint, byte[]>> MessageQueue;
+        public ConcurrentQueue<KeyValuePair<IPEndPoint, byte[]>> MessageQueue;
         private object locker = new object();
         public IMetaDataFilter Filter { get; set; }
         public IQueue Queue { get; set; }
@@ -172,7 +173,6 @@ namespace Spider.Core
                 {
                     if (Queue.Count() <= 0)
                     {
-                        Logger.Info("JoinDHTNetwork MakeNeighbours");
                         JoinDHTNetwork();
                         MakeNeighbours();
                     }
@@ -234,10 +234,7 @@ namespace Spider.Core
         {
             try
             {
-                lock (locker)
-                {
-                    MessageQueue.Enqueue(new KeyValuePair<IPEndPoint, byte[]>(endpoint, buffer));
-                }
+                MessageQueue.Enqueue(new KeyValuePair<IPEndPoint, byte[]>(endpoint, buffer));
 
             }
             catch (Exception ex)
@@ -250,34 +247,18 @@ namespace Spider.Core
         {
             while (true)
             {
-                try
+                if (MessageQueue.Count > 0)
                 {
                     var msg = new KeyValuePair<IPEndPoint, byte[]>();
-                    if (MessageQueue.Count > 0)
-                    {
-                        lock (locker)
-                        {
-                            if (MessageQueue.Count > 0)
-                            {
-                                msg = MessageQueue.Dequeue();
-                            }
-                        }
-                    }
-                    if (msg.Key != null && msg.Value != null)
+                    if (MessageQueue.TryDequeue(out msg))
                     {
                         ProcessMessage(msg.Value, msg.Key);
                     }
-                    else
-                    {
-                        Thread.Sleep(1000);
-                    }
                 }
-                catch { }
-                finally
+                else
                 {
-                    Thread.Sleep(100);
+                    Thread.Sleep(1000);
                 }
-
             }
         }
         private void ProcessMessage(byte[] buffer, IPEndPoint endpoint)
