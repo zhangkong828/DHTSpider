@@ -210,7 +210,7 @@ namespace Spider
                 }
                 catch (Exception ex)
                 {
-                    Logger.Error($"Download {ex.Message}");
+                    //Logger.Error($"Download {ex.Message}");
                 }
                 finally
                 {

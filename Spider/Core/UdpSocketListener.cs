@@ -158,9 +158,14 @@ namespace Spider.Core
             {
                 if (endpoint.Address != IPAddress.Any)
                 {
-                    var lenght = m_ListenSocket.SendTo(buffer, endpoint);
+                    var len = m_ListenSocket.SendTo(buffer, endpoint);
+
                     //测试
-                    Logger.Warn($"buffer:{lenght}   remote:{endpoint}");
+                    Logger.Warn($"Send :{len}  {buffer.Length} {endpoint}");
+                }
+                else
+                {
+                    Logger.Fatal($"Send Not Work {endpoint.ToString()}");
                 }
             }
             catch (Exception ex)

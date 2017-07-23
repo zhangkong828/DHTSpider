@@ -14,6 +14,7 @@ using System.Threading.Tasks;
 using Tancoder.Torrent;
 using Tancoder.Torrent.BEncoding;
 using Tancoder.Torrent.Client;
+using Tancoder.Torrent.Client.Messages;
 using Tancoder.Torrent.Dht;
 using Tancoder.Torrent.Dht.Listeners;
 using Tancoder.Torrent.Dht.Messages;
@@ -22,10 +23,13 @@ namespace Spider.Core
 {
     public class DHTSpider : IDhtEngine
     {
-        public static List<IPEndPoint> BOOTSTRAP_NODES = new List<IPEndPoint>() {
+        private static List<IPEndPoint> BOOTSTRAP_NODES = new List<IPEndPoint>() {
             new IPEndPoint(Dns.GetHostEntry("router.bittorrent.com").AddressList[0], 6881),
-            new IPEndPoint(Dns.GetHostEntry("dht.transmissionbt.com").AddressList[0], 6881)
+            new IPEndPoint(Dns.GetHostEntry("dht.transmissionbt.com").AddressList[0], 6881),
+            new IPEndPoint(Dns.GetHostEntry("router.utorrent.com").AddressList[0], 6881)
         };
+
+        private static int MaxNodesSize = 1000;
 
         public DHTSpider(IPEndPoint localAddress, IQueue queue)
         {
@@ -33,7 +37,7 @@ namespace Spider.Core
             //udp = new DhtListener(localAddress);
             //udpServer = new AsyncUDPServer(localAddress);
             udpSocketListener = new UdpSocketListener(localAddress);
-            KTable = new HashSet<Node>();
+            KTable = new ConcurrentDictionary<string, Node>();
             TokenManager = new EasyTokenManager();
             Queue = queue;
             MessageQueue = new ConcurrentQueue<KeyValuePair<IPEndPoint, byte[]>>();
@@ -47,7 +51,7 @@ namespace Spider.Core
 
         public ITokenManager TokenManager { get; private set; }
 
-        public HashSet<Node> KTable { get; set; }
+        public ConcurrentDictionary<string, Node> KTable;
 
         private bool disposed = false;
         public bool Disposed
@@ -75,17 +79,13 @@ namespace Spider.Core
 
         public void Add(Node node)
         {
-            Logger.Fatal($"Add1  {KTable.Count} {node.Id} {node.Token} {node.EndPoint}");
-            lock (locker)
+            if (KTable.Count >= MaxNodesSize)
             {
-                if (!KTable.Contains(node))
-                {
-                    lock (locker)
-                    {
-                        Logger.Fatal($"Add2  {KTable.Count} {node.Id} {node.Token} {node.EndPoint}");
-                        KTable.Add(node);
-                    }
-                }
+                return;
+            }
+            if (!KTable.ContainsKey(node.Id.ToString()))
+            {
+                KTable.TryAdd(node.Id.ToString(), node);
             }
         }
 
@@ -104,11 +104,7 @@ namespace Spider.Core
                     NewMetadata?.Invoke(this, new NewMetadataEventArgs(infohash, endpoint));
                 }
             }
-            catch (Exception)
-            {
-
-                throw;
-            }
+            catch { }
         }
 
         public NodeId GetNeighborId(NodeId target)
@@ -122,7 +118,6 @@ namespace Spider.Core
 
         public void GetPeers(InfoHash infohash)
         {
-            Logger.Warn($"GetPeers");
         }
 
         public FindPeersResult QueryFindNode(NodeId target)
@@ -130,8 +125,8 @@ namespace Spider.Core
             var result = new FindPeersResult()
             {
                 Found = false,
-                //Nodes = KTable.Take(8).ToList(),
-                Nodes = KTable.OrderByDescending(n => n.LastSeen).Take(8).ToList(),
+                Nodes = KTable.Values.Take(8).ToList(),
+                //Nodes = KTable.Values.OrderByDescending(n => n.LastSeen).Take(8).ToList(),
             };
             return result;
         }
@@ -149,6 +144,14 @@ namespace Spider.Core
 
         public void Send(DhtMessage msg, IPEndPoint endpoint)
         {
+            if (msg.TransactionId == null)
+            {
+                if (msg is ResponseMessage)
+                {
+                    //throw new ArgumentException("Message must have a transaction id");
+                }
+                msg.TransactionId = TransactionId.NextId();
+            }
             var buffer = msg.Encode();
 
             //udp.Send(buffer, endpoint);
@@ -176,7 +179,7 @@ namespace Spider.Core
                         JoinDHTNetwork();
                         MakeNeighbours();
                     }
-                    Thread.Sleep(3000);
+                    Thread.Sleep(1000);
                 }
 
             });
@@ -204,25 +207,24 @@ namespace Spider.Core
         }
         private void MakeNeighbours()
         {
-            foreach (var node in KTable)
+            foreach (var item in KTable)
             {
-                SendFindNodeRequest(node.EndPoint, node.Id);
+                SendFindNodeRequest(item.Value.EndPoint, item.Value.Id);
             }
             KTable.Clear();
         }
 
         private void SendFindNodeRequest(IPEndPoint address, NodeId nodeid = null)
         {
-            FindNode msg = null;
-
             var nid = nodeid == null ? LocalId : GetNeighborId(nodeid);
             try
             {
-                msg = new FindNode(nid, NodeId.Create());
+                var msg = new FindNode(nid, NodeId.Create());
                 Send(msg, address);
             }
-            catch
+            catch (Exception ex)
             {
+                Logger.Trace($"SendFindNodeRequest nid:{nid} {address} {ex.ToString()}");
             }
         }
 
@@ -269,6 +271,7 @@ namespace Spider.Core
                 string error;
                 if (MessageFactory.TryNoTraceDecodeMessage((BEncodedDictionary)BEncodedValue.Decode(buffer, 0, buffer.Length, false), out message, out error))
                 {
+                    //只处理querymessage 提升效率
                     if (message is QueryMessage)
                     {
                         message.Handle(this, new Node(message.Id, endpoint));
