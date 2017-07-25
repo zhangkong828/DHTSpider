@@ -34,8 +34,6 @@ namespace Spider.Core
         public DHTSpider(IPEndPoint localAddress, IQueue queue)
         {
             LocalId = NodeId.Create();
-            //udp = new DhtListener(localAddress);
-            //udpServer = new AsyncUDPServer(localAddress);
             udpSocketListener = new UdpSocketListener(localAddress);
             KTable = new ConcurrentDictionary<string, Node>();
             TokenManager = new EasyTokenManager();
@@ -153,20 +151,12 @@ namespace Spider.Core
                 msg.TransactionId = TransactionId.NextId();
             }
             var buffer = msg.Encode();
-
-            //udp.Send(buffer, endpoint);
-            // udpServer.Send(buffer, endpoint);
+            
             udpSocketListener.Send(buffer, endpoint);
         }
 
         public void Start()
         {
-            //udp.Start();
-            //udp.MessageReceived += OnMessageReceived;
-
-            //udpServer.Start();
-            //udpServer.MessageReceived += OnMessageReceived;
-
             udpSocketListener.Start();
             udpSocketListener.MessageReceived += OnMessageReceived;
 
@@ -227,9 +217,7 @@ namespace Spider.Core
                 Logger.Trace($"SendFindNodeRequest nid:{nid} {address} {ex.ToString()}");
             }
         }
-
-        //private DhtListener udp;
-        //private AsyncUDPServer udpServer;
+        
         private UdpSocketListener udpSocketListener;
 
         private void OnMessageReceived(byte[] buffer, IPEndPoint endpoint)
