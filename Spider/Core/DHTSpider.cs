@@ -25,8 +25,7 @@ namespace Spider.Core
     {
         private static List<IPEndPoint> BOOTSTRAP_NODES = new List<IPEndPoint>() {
             new IPEndPoint(Dns.GetHostEntry("router.bittorrent.com").AddressList[0], 6881),
-            new IPEndPoint(Dns.GetHostEntry("dht.transmissionbt.com").AddressList[0], 6881),
-            new IPEndPoint(Dns.GetHostEntry("router.utorrent.com").AddressList[0], 6881)
+            new IPEndPoint(Dns.GetHostEntry("dht.transmissionbt.com").AddressList[0], 6881)
         };
 
         private static int MaxNodesSize = 1000;
@@ -259,7 +258,6 @@ namespace Spider.Core
                 string error;
                 if (MessageFactory.TryNoTraceDecodeMessage((BEncodedDictionary)BEncodedValue.Decode(buffer, 0, buffer.Length, false), out message, out error))
                 {
-                    //只处理querymessage 提升效率
                     if (message is QueryMessage)
                     {
                         message.Handle(this, new Node(message.Id, endpoint));

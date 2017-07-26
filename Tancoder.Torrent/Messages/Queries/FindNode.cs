@@ -63,12 +63,12 @@ namespace Tancoder.Torrent.Dht.Messages
         {
             base.Handle(engine, node);
 
-            FindNodeResponse response = new FindNodeResponse(engine.GetNeighborId(Id), TransactionId);
+            //FindNodeResponse response = new FindNodeResponse(engine.GetNeighborId(Id), TransactionId);
 
-            var result = engine.QueryFindNode(Target);
-            response.Nodes = Node.CompactNode(result.Nodes);
+            //var result = engine.QueryFindNode(Target);
+            //response.Nodes = Node.CompactNode(result.Nodes);
             
-            engine.Send(response, node.EndPoint);
+            //engine.Send(response, node.EndPoint);
         }
     }
 }
