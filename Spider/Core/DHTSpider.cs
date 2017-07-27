@@ -32,6 +32,7 @@ namespace Spider.Core
 
         public DHTSpider(IPEndPoint localAddress, IQueue queue)
         {
+            LocalAddress = localAddress;
             LocalId = NodeId.Create();
             udpSocketListener = new UdpSocketListener(localAddress);
             KTable = new ConcurrentDictionary<string, Node>();
@@ -45,7 +46,7 @@ namespace Spider.Core
         public IQueue Queue { get; set; }
 
         public NodeId LocalId { get; set; }
-
+        public IPEndPoint LocalAddress { get; set; }
         public ITokenManager TokenManager { get; private set; }
 
         public ConcurrentDictionary<string, Node> KTable;
@@ -86,6 +87,16 @@ namespace Spider.Core
             }
         }
 
+        public Node FindNode(NodeId nid)
+        {
+            var node = new Node(NodeId.Create(), LocalAddress);
+            if (KTable.TryGetValue(nid.ToString(), out node))
+            {
+                return node;
+            }
+            return null;
+        }
+
         public void Dispose()
         {
             if (disposed)
@@ -119,12 +130,16 @@ namespace Spider.Core
 
         public FindPeersResult QueryFindNode(NodeId target)
         {
-            var result = new FindPeersResult()
+            var result = new FindPeersResult();
+            var targetNode = FindNode(target);
+            if (targetNode != null)
             {
-                Found = false,
-                Nodes = KTable.Values.Take(8).ToList(),
-                //Nodes = KTable.Values.OrderByDescending(n => n.LastSeen).Take(8).ToList(),
-            };
+                result.Nodes.Add(targetNode);
+            }
+            else
+            {
+                result.Nodes = GetClosestFromKTable(target);
+            }
             return result;
         }
 
@@ -137,7 +152,23 @@ namespace Spider.Core
             };
             return result;
         }
-
+        public List<Node> GetClosestFromKTable(NodeId target)
+        {
+            SortedList<NodeId, Node> sortedNodes = new SortedList<NodeId, Node>(8);
+            foreach (Node n in KTable.Values)
+            {
+                NodeId distance = n.Id.Xor(target);
+                if (sortedNodes.Count == 8)
+                {
+                    if (distance > sortedNodes.Keys[sortedNodes.Count - 1])//maxdistance
+                        continue;
+                    //remove last (with the maximum distance)
+                    sortedNodes.RemoveAt(sortedNodes.Count - 1);
+                }
+                sortedNodes.Add(distance, n);
+            }
+            return new List<Node>(sortedNodes.Values);
+        }
 
         public void Send(DhtMessage msg, IPEndPoint endpoint)
         {
@@ -150,7 +181,7 @@ namespace Spider.Core
                 msg.TransactionId = TransactionId.NextId();
             }
             var buffer = msg.Encode();
-            
+
             udpSocketListener.Send(buffer, endpoint);
         }
 
@@ -216,7 +247,7 @@ namespace Spider.Core
                 Logger.Trace($"SendFindNodeRequest nid:{nid} {address} {ex.ToString()}");
             }
         }
-        
+
         private UdpSocketListener udpSocketListener;
 
         private void OnMessageReceived(byte[] buffer, IPEndPoint endpoint)
@@ -262,6 +293,14 @@ namespace Spider.Core
                     {
                         message.Handle(this, new Node(message.Id, endpoint));
                     }
+
+                    //var node = new Node(message.Id, endpoint);
+                    //if (!KTable.TryGetValue(message.Id.ToString(), out node))
+                    //{
+                    //    Add(new Node(message.Id, endpoint));
+                    //}
+                    //node.Seen();
+                    //message.Handle(this, node);
                 }
             }
             catch { }
