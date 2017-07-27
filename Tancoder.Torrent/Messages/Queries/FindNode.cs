@@ -41,34 +41,32 @@ namespace Tancoder.Torrent.Dht.Messages
     {
         private static BEncodedString TargetKey = "target";
         private static BEncodedString QueryName = "find_node";
-        private static ResponseCreator responseCreator = delegate(BEncodedDictionary d, QueryMessage m) { return new FindNodeResponse(d, m); };
+        private static ResponseCreator responseCreator = delegate (BEncodedDictionary d, QueryMessage m) { return new FindNodeResponse(d, m); };
 
         public NodeId Target
         {
             get { return new NodeId((BEncodedString)Parameters[TargetKey]); }
         }
-        
+
         public FindNode(NodeId id, NodeId target)
             : base(id, QueryName, responseCreator)
         {
             Parameters.Add(TargetKey, target.BencodedString());
         }
-        
+
         public FindNode(BEncodedDictionary d)
-            :base(d, responseCreator)
+            : base(d, responseCreator)
         {
         }
 
         public override void Handle(IDhtEngine engine, Node node)
         {
             base.Handle(engine, node);
+            FindNodeResponse response = new FindNodeResponse(engine.LocalId, TransactionId);
+            var result = engine.QueryFindNode(Target);
+            response.Nodes = Node.CompactNode(result.Nodes);
 
-            //FindNodeResponse response = new FindNodeResponse(engine.GetNeighborId(Id), TransactionId);
-
-            //var result = engine.QueryFindNode(Target);
-            //response.Nodes = Node.CompactNode(result.Nodes);
-            
-            //engine.Send(response, node.EndPoint);
+            engine.Send(response, node.EndPoint);
         }
     }
 }

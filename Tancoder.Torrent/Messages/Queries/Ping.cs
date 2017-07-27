@@ -40,10 +40,10 @@ namespace Tancoder.Torrent.Dht.Messages
     public class Ping : QueryMessage
     {
         private static readonly BEncodedString QueryName = "ping";
-        private static readonly ResponseCreator responseCreator = delegate(BEncodedDictionary d, QueryMessage m) { return new PingResponse(d, m); };
+        private static readonly ResponseCreator responseCreator = delegate (BEncodedDictionary d, QueryMessage m) { return new PingResponse(d, m); };
 
         public Ping(NodeId id)
-            :base(id, QueryName, responseCreator)
+            : base(id, QueryName, responseCreator)
         {
 
         }
@@ -58,7 +58,8 @@ namespace Tancoder.Torrent.Dht.Messages
         {
             base.Handle(engine, node);
 
-            PingResponse m = new PingResponse(engine.GetNeighborId(Id), TransactionId);
+            //PingResponse m = new PingResponse(engine.GetNeighborId(Id), TransactionId);
+            PingResponse m = new PingResponse(engine.LocalId, TransactionId);
             engine.Send(m, node.EndPoint);
         }
     }
