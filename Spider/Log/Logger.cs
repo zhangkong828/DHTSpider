@@ -42,9 +42,9 @@ namespace Spider.Log
 
 
 
-        public static void ConsoleWrite(string msg)
+        public static void ConsoleWrite(string msg, ConsoleColor consoleColor = ConsoleColor.Green)
         {
-            Console.ForegroundColor = ConsoleColor.Green;
+            Console.ForegroundColor = consoleColor;
             Console.WriteLine("------------------------------------------------------");
             Console.WriteLine($"[{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}]{msg}");
         }

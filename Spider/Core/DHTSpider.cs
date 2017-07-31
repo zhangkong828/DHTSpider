@@ -1,35 +1,20 @@
-﻿using Spider.Core.IoSocket;
-using Spider.Core.UdpServer;
-using Spider.Log;
+﻿using Spider.Log;
 using Spider.Queue;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Net;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Tancoder.Torrent;
 using Tancoder.Torrent.BEncoding;
-using Tancoder.Torrent.Client;
-using Tancoder.Torrent.Client.Messages;
 using Tancoder.Torrent.Dht;
-using Tancoder.Torrent.Dht.Listeners;
 using Tancoder.Torrent.Dht.Messages;
 
 namespace Spider.Core
 {
     public class DHTSpider : IDhtEngine
     {
-        private static List<IPEndPoint> BOOTSTRAP_NODES = new List<IPEndPoint>() {
-            new IPEndPoint(Dns.GetHostEntry("router.bittorrent.com").AddressList[0], 6881),
-            new IPEndPoint(Dns.GetHostEntry("dht.transmissionbt.com").AddressList[0], 6881)
-        };
-
-        private static int MaxNodesSize = 1000;
-
         public DHTSpider(IPEndPoint localAddress, IQueue queue)
         {
             LocalAddress = localAddress;
@@ -40,6 +25,14 @@ namespace Spider.Core
             Queue = queue;
             MessageQueue = new ConcurrentQueue<KeyValuePair<IPEndPoint, byte[]>>();
         }
+
+        private static List<IPEndPoint> BOOTSTRAP_NODES = new List<IPEndPoint>() {
+            new IPEndPoint(Dns.GetHostEntry("router.bittorrent.com").AddressList[0], 6881),
+            new IPEndPoint(Dns.GetHostEntry("dht.transmissionbt.com").AddressList[0], 6881)
+        };
+
+        private static int MaxNodesSize = 1000;
+
         public ConcurrentQueue<KeyValuePair<IPEndPoint, byte[]>> MessageQueue;
         private object locker = new object();
         public IMetaDataFilter Filter { get; set; }
@@ -216,6 +209,7 @@ namespace Spider.Core
         }
         public void Stop()
         {
+            udpSocketListener.Stop();
         }
 
         private void JoinDHTNetwork()

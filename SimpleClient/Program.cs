@@ -13,18 +13,16 @@ namespace SimpleClient
         {
             var spider = SpiderConfiguration.Create(new SpiderSetting()
             {
-                LocalPort = 6881,
-                IsSaveTorrent = true,
-                TorrentSavePath = "",
-                MaxSpiderThreadCount = 1,
-                MaxDownLoadThreadCount = 20
+                LocalPort = 6881,//使用端口
+                IsSaveTorrent = true,//是否保存torrent
+                TorrentSavePath = "",//torrent保存路径
+                MaxSpiderThreadCount = 1,//爬虫线程数
+                MaxDownLoadThreadCount = 20//下载线程数
             })
-            .UseDefaultCache()
-            .UseDefaultQueue()
-            //.UseRedisQueue()
-            //.UseElasticSearchStore()
-            .UseMongoDBStore()
-            .Start();
+           .UseDefaultCache() //默认使用内存缓存
+           .UseDefaultQueue() //默认使用内存队列
+           .Start();
+
 
             Console.ReadKey();
         }

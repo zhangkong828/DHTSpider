@@ -3,6 +3,7 @@ using Spider.Cache;
 using Spider.Core;
 using Spider.Log;
 using Spider.Queue;
+using Spider.Store;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -28,6 +29,7 @@ namespace Spider
         public SpiderSetting _option { get; set; }
         public ICache _cache { get; set; }
         public IQueue _queue { get; set; }
+        public IStore _store { get; set; }
 
         private SpiderConfiguration(SpiderSetting option)
         {
@@ -73,7 +75,7 @@ namespace Spider
 
         public SpiderConfiguration UseDefaultQueue()
         {
-            _builder.RegisterType<MemoryQueue>().As<IQueue>().Named<IQueue>("Queue").SingleInstance();
+            _builder.RegisterType<DefaultQueue>().As<IQueue>().Named<IQueue>("Queue").SingleInstance();
             return _instance;
         }
 
@@ -85,12 +87,13 @@ namespace Spider
 
         public SpiderConfiguration UseElasticSearchStore()
         {
+            _builder.RegisterType<ElasticSearchStore>().As<IStore>().Named<IStore>("Store").SingleInstance();
             return _instance;
         }
 
         public SpiderConfiguration UseMongoDBStore()
         {
-            //TODO
+            _builder.RegisterType<MongoDBStore>().As<IStore>().Named<IStore>("Store").SingleInstance();
             return _instance;
         }
 
@@ -110,18 +113,15 @@ namespace Spider
             {
                 throw new Exception("没有注册Queue");
             }
+            //if (!_container.IsRegisteredWithName<IStore>("Store"))
+            //{
+            //    throw new Exception("没有注册Store");
+            //}
 
             _queue = _container.ResolveNamed<IQueue>("Queue");
             _cache = _container.ResolveNamed<ICache>("Cache");
+            //_store = _container.ResolveNamed<IStore>("Store");
 
-            Task.Run(() =>
-            {
-                while (true)
-                {
-                    Thread.Sleep(1000 * 60);
-                    Logger.Info($"QueueCount:{_queue.Count()}");
-                }
-            });
 
             for (var i = 0; i < _option.MaxSpiderThreadCount; i++)
             {
@@ -197,13 +197,7 @@ namespace Spider
                                 File.WriteAllBytes(filepath, metadata.Encode());
                             }
                             var list = new List<string>();
-                            //foreach (var item in metadata)
-                            //{
-                            //    list.Add($"[key]={item.Key}[val]={item.Value}");
-                            //}
-                            //var str = string.Join("&", list);
-                            //Logger.Warn($"{hash} {name} {str}");
-                            Logger.ConsoleWrite($"线程[{threadId}]下载完成   Name:{name} ");
+                            Logger.ConsoleWrite($"线程[{threadId}]下载完成   Name:{name} ", ConsoleColor.Yellow);
                         }
                     }
 

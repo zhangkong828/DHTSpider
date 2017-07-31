@@ -9,10 +9,10 @@ using Tancoder.Torrent;
 
 namespace Spider.Queue
 {
-    public class MemoryQueue : IQueue
+    public class DefaultQueue : IQueue
     {
         public ConcurrentQueue<KeyValuePair<InfoHash, IPEndPoint>> _queue = null;
-        public MemoryQueue()
+        public DefaultQueue()
         {
             _queue = new ConcurrentQueue<KeyValuePair<InfoHash, IPEndPoint>>();
         }

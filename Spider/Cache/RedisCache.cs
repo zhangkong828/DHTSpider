@@ -9,6 +9,7 @@ namespace Spider.Cache
 {
     public class RedisCache : ICache
     {
+        //TODO
         public RedisCache()
         {
         }

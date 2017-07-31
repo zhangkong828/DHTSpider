@@ -5,7 +5,8 @@ using System.Text;
 
 namespace Spider.Store
 {
-    interface IStore
+    public interface IStore
     {
+        bool Insert(object obj);
     }
 }

@@ -75,9 +75,9 @@ namespace Spider.Core
                 var errorCode = (int)e.SocketError;
 
                 //The listen socket was closed
-                if (errorCode == 995 || errorCode == 10004 || errorCode == 10038)
-                    //return;
-                    Logger.Fatal($"The listen socket was closed  errorCode:{errorCode}");
+                //if (errorCode == 995 || errorCode == 10004 || errorCode == 10038)
+                //return;
+                //Logger.Fatal($"The listen socket was closed  errorCode:{errorCode}");
                 Logger.Fatal($"errorCode:{errorCode}");
             }
 
@@ -88,8 +88,6 @@ namespace Spider.Core
                     //获取接收到的数据
                     byte[] ByteArray = new byte[e.BytesTransferred];
                     Array.Copy(e.Buffer, 0, ByteArray, 0, ByteArray.Length);
-                    //测试
-                    Logger.Debug($"buffer:{ByteArray.Length}   remote:{(IPEndPoint)e.RemoteEndPoint}");
                     MessageReceived?.Invoke(ByteArray, (IPEndPoint)e.RemoteEndPoint);
                 }
                 catch (Exception exc)
@@ -159,9 +157,7 @@ namespace Spider.Core
                 if (endpoint.Address != IPAddress.Any)
                 {
                     var len = m_ListenSocket.SendTo(buffer, endpoint);
-
-                    //测试
-                    Logger.Warn($"Send :{len}  {buffer.Length} {endpoint}");
+                    //Logger.Warn($"Send :{len}  {buffer.Length} {endpoint}");
                 }
                 else
                 {

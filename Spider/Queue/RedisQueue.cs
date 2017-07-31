@@ -10,7 +10,7 @@ namespace Spider.Queue
 {
     public class RedisQueue : IQueue
     {
-
+        //TODO
         public RedisQueue()
         {
         }
