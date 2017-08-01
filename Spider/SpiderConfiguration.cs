@@ -129,7 +129,7 @@ namespace Spider
                 Logger.ConsoleWrite($"线程：{i + 1} 端口：{port} 已启动监听...");
                 Task.Run(() =>
                 {
-                    var spider = new DHTSpider(new IPEndPoint(IPAddress.Any, port), _queue);
+                    var spider = new DHTSpider(new IPEndPoint(IPAddress.Parse("0.0.0.0"), port), _queue);
                     spider.NewMetadata += DHTSpider_NewMetadata;
                     spider.Start();
                 });
@@ -196,7 +196,6 @@ namespace Spider
                                 var filepath = $"{_option.TorrentSavePath}\\{hash}.torrent";
                                 File.WriteAllBytes(filepath, metadata.Encode());
                             }
-                            var list = new List<string>();
                             Logger.ConsoleWrite($"线程[{threadId}]下载完成   Name:{name} ", ConsoleColor.Yellow);
                         }
                     }
