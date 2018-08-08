@@ -17,7 +17,7 @@ namespace SimpleClient
                 IsSaveTorrent = true,//是否保存torrent
                 TorrentSavePath = "",//torrent保存路径
                 MaxSpiderThreadCount = 1,//爬虫线程数
-                MaxDownLoadThreadCount = 20//下载线程数
+                MaxDownLoadThreadCount = 5//下载线程数
             })
            .UseDefaultCache() //默认使用内存缓存
            .UseDefaultQueue() //默认使用内存队列

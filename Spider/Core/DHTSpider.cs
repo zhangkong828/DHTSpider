@@ -190,7 +190,7 @@ namespace Spider.Core
                     if (Queue.Count() <= 0)
                     {
                         JoinDHTNetwork();
-                        MakeNeighbours();
+                       // MakeNeighbours();
                     }
                     Thread.Sleep(1000);
                 }
