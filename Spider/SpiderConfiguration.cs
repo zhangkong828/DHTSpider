@@ -198,6 +198,7 @@ namespace Spider
                             }
                             Logger.ConsoleWrite($"线程[{threadId}]下载完成   Name:{name} ", ConsoleColor.Yellow);
                         }
+
                     }
 
                 }

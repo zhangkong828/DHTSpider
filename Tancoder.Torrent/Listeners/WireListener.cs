@@ -14,7 +14,7 @@ using Tancoder.Torrent.Messages.Wire;
 
 namespace Tancoder.Torrent.Client
 {
-    public class WireClient:IDisposable
+    public class WireClient : IDisposable
     {
         private TcpClient client;
         private NetworkStream stream;
@@ -94,7 +94,7 @@ namespace Tancoder.Torrent.Client
                 for (int i = 0; i < piecesNum; i++)
                 {
                     message = new ExtQueryPiece(ut_metadata, i);
-                   SendMessage(message);
+                    SendMessage(message);
                 }
                 //等待pieces接收完毕
                 rtask.Wait();
@@ -113,6 +113,89 @@ namespace Tancoder.Torrent.Client
                 }
 
                 return BEncodedDictionary.DecodeTorrent(metadata);
+            }
+            catch (AggregateException ex)
+            {
+                throw ex.InnerException;
+            }
+            finally
+            {
+                if (client != null)
+                    client.Close();
+            }
+        }
+
+        public byte[] GetMetaDataBytes(InfoHash hash)
+        {
+            WireMessage message;
+            ExtHandShack exths;
+            long metadataSize;
+            int piecesNum;
+            byte[] metadata;
+            byte ut_metadata;
+
+            try
+            {
+                //连接
+                if (!client.ConnectAsync(EndPoint.Address, EndPoint.Port).Wait(5000))
+                {
+                    Trace.WriteLine("Connect Timeout", "Socket");
+                    return null;
+                }
+                stream = client.GetStream();
+
+                //发送握手
+                message = new HandShack(hash);
+                SendMessage(message);
+
+                //接受握手
+                message = ReceiveMessage<HandShack>(1);
+                if (!message.Legal || !(message as HandShack).SupportExtend)
+                {
+                    Trace.WriteLine(EndPoint, "HandShack Fail");
+                    return null;
+                }
+
+                //发送拓展握手
+                message = new ExtHandShack() { SupportUtMetadata = true };
+                SendMessage(message);
+
+                //接受拓展
+                exths = ReceiveMessage<ExtHandShack>();
+                if (!exths.Legal || !exths.CanGetMetadate || exths.MetadataSize > MaxMetadataSize || exths.MetadataSize <= 0)
+                {
+                    Trace.WriteLine(EndPoint, "ExtendHandShack Fail");
+                    return null;
+                }
+                metadataSize = exths.MetadataSize;
+                ut_metadata = exths.UtMetadata;
+                piecesNum = (int)Math.Ceiling(metadataSize / (decimal)PieceLength);
+
+                //开始接受pieces
+                var rtask = ReceivePiecesAsync(metadataSize, piecesNum);
+                //开始发送piece请求
+                for (int i = 0; i < piecesNum; i++)
+                {
+                    message = new ExtQueryPiece(ut_metadata, i);
+                    SendMessage(message);
+                }
+                //等待pieces接收完毕
+                rtask.Wait();
+                metadata = rtask.Result;
+
+                if (metadata == null)
+                    return null;
+
+                //检查hash值是否正确
+                var sha1 = new System.Security.Cryptography.SHA1CryptoServiceProvider();
+                byte[] infohash = sha1.ComputeHash(metadata);
+                if (!infohash.SequenceEqual(hash.Hash))
+                {
+                    Trace.WriteLine(EndPoint, "Hash Wrong");
+                    return null;
+                }
+
+                return metadata;
             }
             catch (AggregateException ex)
             {
@@ -184,7 +267,7 @@ namespace Tancoder.Torrent.Client
             byte[] buffer = message.Encode();
             stream.Write(buffer, 0, buffer.Length);
         }
-        
+
         public T ReceiveMessage<T>(int head = 4) where T : WireMessage, new()
         {
             T msg = new T();
