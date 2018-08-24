@@ -11,7 +11,7 @@ namespace SimpleClient
     {
         static void Main(string[] args)
         {
-            var spider = SpiderConfiguration.Create(new SpiderSetting()
+            SpiderConfiguration.Create(new SpiderSetting()
             {
                 LocalPort = 6881,//使用端口
                 IsSaveTorrent = true,//是否保存torrent
